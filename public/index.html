@@ -117,6 +117,20 @@
       }
     }
 
+    @keyframes neon-orange-pulse {
+
+      0%,
+      100% {
+        color: #ff5722;
+        text-shadow: 0 0 10px #ff5722, 0 0 20px #ff8c42, 2px 2px 0 #2d1b3d;
+      }
+
+      50% {
+        color: #ff8c42;
+        text-shadow: 0 0 20px #ff8c42, 0 0 40px #ffcb47, 2px 2px 0 #2d1b3d;
+      }
+    }
+
     .title-stack {
       text-align: center;
       z-index: 2;
@@ -134,9 +148,10 @@
 
     .title-stack .subtitle {
       font-size: 14px;
-      color: #aa6fce;
       letter-spacing: 8px;
       margin-bottom: 40px;
+      font-weight: bold;
+      animation: neon-orange-pulse 1.5s ease-in-out infinite;
     }
 
     .name-form {
@@ -420,7 +435,9 @@
           <br>
           <button onclick="startGame()">JOGAR</button>
           <br>
-          <button onclick="showTop10Screen()" style="margin-top: 15px; font-size: 16px; padding: 10px 30px; background: transparent; box-shadow: none;">TOP 10</button>
+          <button onclick="showTop10Screen()"
+            style="margin-top: 15px; font-size: 16px; padding: 10px 30px; background: transparent; box-shadow: none;">TOP
+            10</button>
         </div>
         <div class="controls-hint">← → MOVER ∙ ESPAÇO PULAR</div>
       </div>
@@ -439,7 +456,8 @@
         </div>
       </div>
 
-      <div id="top10Screen" style="display:none; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(45,27,61,0.95) 0%, rgba(10,6,18,0.98) 100%); flex-direction:column; justify-content:center; align-items:center; z-index:1000; padding:20px;">
+      <div id="top10Screen"
+        style="display:none; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(45,27,61,0.95) 0%, rgba(10,6,18,0.98) 100%); flex-direction:column; justify-content:center; align-items:center; z-index:1000; padding:20px;">
         <div class="top-10-panel">
           <div class="top-10-title">★ TOP 10 ESCALADORES ★</div>
           <div id="top10ListOnly">
@@ -1176,116 +1194,116 @@
       async function fetchTopScores() {
         try {
           const res = await fetch(`${API_BASE}/api/scores`, { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } catch (err) {
-        console.error('Falha ao buscar scores:', err);
-        return null;
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return await res.json();
+        } catch (err) {
+          console.error('Falha ao buscar scores:', err);
+          return null;
+        }
       }
-    }
 
-  async function submitScore(name, score) {
-      try {
-        const res = await fetch(`${API_BASE}/api/scores`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, score })
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } catch (err) {
-        console.error('Falha ao enviar score:', err);
-        return null;
+      async function submitScore(name, score) {
+        try {
+          const res = await fetch(`${API_BASE}/api/scores`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, score })
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return await res.json();
+        } catch (err) {
+          console.error('Falha ao enviar score:', err);
+          return null;
+        }
       }
-    }
 
-    function renderTopList(scores, currentEntry) {
-      let html = '';
-      scores.forEach((t, i) => {
-        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-        const isCurrent = currentEntry &&
-          t.date === currentEntry.date &&
-          t.name === currentEntry.name &&
-          t.score === currentEntry.score ? ' current' : '';
-        const badge = i === 0 ? '★1★' : i === 1 ? '★2★' : i === 2 ? '★3★' : `#${i + 1}`;
-        html += `<div class="top-row ${rankClass}${isCurrent}">
+      function renderTopList(scores, currentEntry) {
+        let html = '';
+        scores.forEach((t, i) => {
+          const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+          const isCurrent = currentEntry &&
+            t.date === currentEntry.date &&
+            t.name === currentEntry.name &&
+            t.score === currentEntry.score ? ' current' : '';
+          const badge = i === 0 ? '★1★' : i === 1 ? '★2★' : i === 2 ? '★3★' : `#${i + 1}`;
+          html += `<div class="top-row ${rankClass}${isCurrent}">
         <span class="rank-badge">${badge}</span>
         <span>${escapeHtml(t.name)}</span>
         <span>${t.score}</span>
       </div>`;
-      });
-      if (!scores.length) {
-        html = '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">SEM RECORDES AINDA</div>';
+        });
+        if (!scores.length) {
+          html = '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">SEM RECORDES AINDA</div>';
+        }
+        document.getElementById('top10List').innerHTML = html;
       }
-      document.getElementById('top10List').innerHTML = html;
-    }
 
-    async function endGame() {
-      gameActive = false;
-      document.getElementById('finalScore').textContent = score;
-      document.getElementById('top10List').innerHTML =
-        '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">ENVIANDO PONTUAÇÃO...</div>';
-      document.getElementById('gameOverScreen').style.display = 'flex';
+      async function endGame() {
+        gameActive = false;
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('top10List').innerHTML =
+          '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">ENVIANDO PONTUAÇÃO...</div>';
+        document.getElementById('gameOverScreen').style.display = 'flex';
 
-      const result = await submitScore(playerName, score);
+        const result = await submitScore(playerName, score);
 
-      if (result && result.ok) {
-        // servidor já retorna o top atualizado
-        renderTopList(result.top || [], result.yourEntry);
-      } else {
-        // fallback: tenta buscar o top mesmo assim
-        const top = await fetchTopScores();
-        if (top) {
-          renderTopList(top, null);
+        if (result && result.ok) {
+          // servidor já retorna o top atualizado
+          renderTopList(result.top || [], result.yourEntry);
         } else {
-          document.getElementById('top10List').innerHTML =
-            '<div style="text-align:center;color:#ff4757;padding:20px;font-size:11px">⚠ SERVIDOR INDISPONÍVEL<br><br>SEU SCORE: ' + score + '</div>';
+          // fallback: tenta buscar o top mesmo assim
+          const top = await fetchTopScores();
+          if (top) {
+            renderTopList(top, null);
+          } else {
+            document.getElementById('top10List').innerHTML =
+              '<div style="text-align:center;color:#ff4757;padding:20px;font-size:11px">⚠ SERVIDOR INDISPONÍVEL<br><br>SEU SCORE: ' + score + '</div>';
+          }
         }
       }
-    }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
 
-    function gameLoop() {
-      if (!gameActive) return;
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
+      function gameLoop() {
+        if (!gameActive) return;
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+      }
 
-    document.addEventListener('keydown', e => {
-      keys[e.key] = true;
-      if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && gameActive) {
+      document.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && gameActive) {
+          e.preventDefault();
+          if (!player.isJumping) {
+            player.velocityY = -player.jumpPower;
+            player.isJumping = true;
+          }
+        }
+        if (e.key === 'Enter') {
+          if (document.getElementById('top10Screen').style.display === 'flex') {
+            closeTop10();
+          } else if (document.getElementById('nameScreen').style.display !== 'none') {
+            startGame();
+          } else if (document.getElementById('gameOverScreen').style.display === 'flex') {
+            location.reload();
+          }
+        }
+      });
+      document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+      canvas.addEventListener('touchstart', e => {
         e.preventDefault();
-        if (!player.isJumping) {
+        if (gameActive && !player.isJumping) {
           player.velocityY = -player.jumpPower;
           player.isJumping = true;
         }
-      }
-      if (e.key === 'Enter') {
-        if (document.getElementById('top10Screen').style.display === 'flex') {
-          closeTop10();
-        } else if (document.getElementById('nameScreen').style.display !== 'none') {
-          startGame();
-        } else if (document.getElementById('gameOverScreen').style.display === 'flex') {
-          location.reload();
-        }
-      }
-    });
-    document.addEventListener('keyup', e => { keys[e.key] = false; });
+      }, { passive: false });
 
-    canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      if (gameActive && !player.isJumping) {
-        player.velocityY = -player.jumpPower;
-        player.isJumping = true;
-      }
-    }, { passive: false });
-
-    setTimeout(() => { try { document.getElementById('playerName').focus(); } catch (e) { } }, 100);
-}) ();
+      setTimeout(() => { try { document.getElementById('playerName').focus(); } catch (e) { } }, 100);
+    })();
   </script>
 </body>
 
