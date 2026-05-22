@@ -1,0 +1,32 @@
+# Dependências
+node_modules/
+
+# Dados de produção (NÃO subir o ranking pro Git!)
+scores.json
+*.tmp
+data/
+backups/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PM2
+.pm2/
+ecosystem.config.local.js
