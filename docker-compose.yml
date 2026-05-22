@@ -14,36 +14,12 @@ services:
     volumes:
       # Persiste o scores.json entre deploys e restarts
       - scores-data:/data
-    networks:
-      - torre-net
-    # Não expõe porta diretamente — o nginx faz o proxy
-    expose:
-      - "3000"
-
-  # ── Nginx (reverse proxy + HTTPS) ─────────────────────────────────────────
-  nginx:
-    image: nginx:alpine
-    container_name: torre-nginx
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf.example:/etc/nginx/conf.d/default.conf:ro
-      # Certificados Let's Encrypt (gerados com certbot na VPS)
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
-    depends_on:
-      - app
-    networks:
-      - torre-net
+      # Expõe a porta 3000 para o host local
+      # O Nginx do host deve fazer o proxy pass para http://127.0.0.1:3000
+      - "127.0.0.1:3000:3000"
 
 # ── Volumes nomeados ───────────────────────────────────────────────────────
 volumes:
   scores-data:
     driver: local
-
-# ── Rede interna ───────────────────────────────────────────────────────────
-networks:
-  torre-net:
-    driver: bridge
