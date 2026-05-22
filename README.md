@@ -91,7 +91,7 @@ Mesmo princípio: precisa de volume persistente, senão o `scores.json` é perdi
 
 ### VPS tradicional (DigitalOcean, Hetzner, etc.)
 ```bash
-git clone <seu-repo>
+git clone https://github.com/Gianotto/torre-infinita.git
 cd server
 npm install --production
 # rode com pm2 pra ficar em background
