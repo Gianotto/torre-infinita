@@ -1131,10 +1131,11 @@
       // Se hospedar em domínios diferentes, troque pelo URL completo,
       // ex: 'https://meu-backend.fly.dev'
       // ═══════════════════════════════════════════════════════════
-      const API_BASE = 'torre.bygianotto.com.br';
+      const API_BASE = '';
 
-      try {
-        const res = await fetch(`${API_BASE}/api/scores`, { cache: 'no-store' });
+      async function fetchTopScores() {
+        try {
+          const res = await fetch(`${API_BASE}/api/scores`, { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return await res.json();
       } catch (err) {
