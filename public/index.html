@@ -1224,8 +1224,12 @@
           player.isJumping = true;
         }
       }
-      if (e.key === 'Enter' && document.getElementById('nameScreen').style.display !== 'none') {
-        startGame();
+      if (e.key === 'Enter') {
+        if (document.getElementById('nameScreen').style.display !== 'none') {
+          startGame();
+        } else if (document.getElementById('gameOverScreen').style.display === 'flex') {
+          location.reload();
+        }
       }
     });
     document.addEventListener('keyup', e => { keys[e.key] = false; });
