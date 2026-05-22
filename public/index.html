@@ -418,7 +418,9 @@
           <label>INSIRA SEU NOME</label>
           <input type="text" id="playerName" placeholder="HERÓI" maxlength="12" autocomplete="off">
           <br>
-          <button onclick="startGame()">INICIAR</button>
+          <button onclick="startGame()">JOGAR</button>
+          <br>
+          <button onclick="showTop10Screen()" style="margin-top: 15px; font-size: 16px; padding: 10px 30px; background: transparent; box-shadow: none;">TOP 10</button>
         </div>
         <div class="controls-hint">← → MOVER ∙ ESPAÇO PULAR</div>
       </div>
@@ -435,6 +437,16 @@
             <span class="value" id="playerNameDisplay">-</span>
           </div>
         </div>
+      </div>
+
+      <div id="top10Screen" style="display:none; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(45,27,61,0.95) 0%, rgba(10,6,18,0.98) 100%); flex-direction:column; justify-content:center; align-items:center; z-index:1000; padding:20px;">
+        <div class="top-10-panel">
+          <div class="top-10-title">★ TOP 10 ESCALADORES ★</div>
+          <div id="top10ListOnly">
+            <div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">CARREGANDO...</div>
+          </div>
+        </div>
+        <button class="restart-btn" onclick="closeTop10()">VOLTAR</button>
       </div>
 
       <div id="gameOverScreen">
@@ -887,6 +899,32 @@
         regenTorches();
       }
 
+      async function showTop10Screen() {
+        document.getElementById('nameScreen').style.display = 'none';
+        document.getElementById('top10Screen').style.display = 'flex';
+        const top = await fetchTopScores();
+        let html = '';
+        if (!top || !top.length) {
+          html = '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">SEM RECORDES AINDA</div>';
+        } else {
+          top.forEach((s, i) => {
+            const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            const icon = i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+            html += `<div class="top-row ${cls}">
+              <div class="rank-badge">${icon}</div>
+              <div>${s.name}</div>
+              <div>${s.score}</div>
+            </div>`;
+          });
+        }
+        document.getElementById('top10ListOnly').innerHTML = html;
+      }
+
+      function closeTop10() {
+        document.getElementById('top10Screen').style.display = 'none';
+        document.getElementById('nameScreen').style.display = 'flex';
+      }
+
       function startGame() {
         const nameInput = document.getElementById('playerName');
         const v = (nameInput.value || '').trim().toUpperCase();
@@ -1225,7 +1263,9 @@
         }
       }
       if (e.key === 'Enter') {
-        if (document.getElementById('nameScreen').style.display !== 'none') {
+        if (document.getElementById('top10Screen').style.display === 'flex') {
+          closeTop10();
+        } else if (document.getElementById('nameScreen').style.display !== 'none') {
           startGame();
         } else if (document.getElementById('gameOverScreen').style.display === 'flex') {
           location.reload();
