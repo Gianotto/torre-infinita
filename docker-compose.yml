@@ -1,0 +1,49 @@
+services:
+
+  # ── Aplicação Node.js ──────────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: torre-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SCORES_FILE: /data/scores.json
+      MAX_SCORES: 10
+      RATE_LIMIT_MS: 3000
+    volumes:
+      # Persiste o scores.json entre deploys e restarts
+      - scores-data:/data
+    networks:
+      - torre-net
+    # Não expõe porta diretamente — o nginx faz o proxy
+    expose:
+      - "3000"
+
+  # ── Nginx (reverse proxy + HTTPS) ─────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: torre-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf.example:/etc/nginx/conf.d/default.conf:ro
+      # Certificados Let's Encrypt (gerados com certbot na VPS)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - app
+    networks:
+      - torre-net
+
+# ── Volumes nomeados ───────────────────────────────────────────────────────
+volumes:
+  scores-data:
+    driver: local
+
+# ── Rede interna ───────────────────────────────────────────────────────────
+networks:
+  torre-net:
+    driver: bridge
