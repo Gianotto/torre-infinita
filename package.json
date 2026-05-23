@@ -1,7 +1,7 @@
 {
-  "name": "torre-infinita-server",
+  "name": "random-games",
   "version": "1.0.0",
-  "description": "Backend de ranking para o jogo Torre Infinita",
+  "description": "Plataforma arcade com jogos semanais e ranking TOP 10",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
