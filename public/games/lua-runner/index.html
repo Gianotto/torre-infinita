@@ -171,8 +171,7 @@
       <div id="nameScreen" class="screen">
         <h1 class="game-title">LUA RUNNER</h1>
         <div class="game-subtitle">∙ MOON SURFACE EDITION ∙</div>
-        <label class="field-label">INSIRA SEU NOME</label>
-        <input type="text" id="playerName" placeholder="HERÓI" maxlength="12" autocomplete="off">
+        <input type="text" id="playerName" placeholder="NOME" maxlength="12" autocomplete="off">
         <button class="btn" onclick="startGame()">JOGAR</button>
         <button class="btn small" onclick="showTop10Screen()">TOP 10</button>
         <button class="btn small" onclick="window.location.href='/'">← HUB</button>
@@ -197,7 +196,7 @@
 
       <!-- Game canvas + touch buttons -->
       <div id="gameScreen">
-        <canvas id="gameCanvas" width="700" height="250"></canvas>
+        <canvas id="gameCanvas" width="700" height="320"></canvas>
         <div id="touchControls">
           <div class="touch-btn" id="touchJump">↑</div>
           <div class="touch-btn" id="touchDuck">↓</div>
@@ -335,7 +334,7 @@
       addTouchBtn(document.getElementById('touchDuck'), 'duck');
 
       // ── Game constants ─────────────────────────────────────────
-      const W = 700, H = 250;
+      const W = 700, H = 320;
       const GROUND_Y   = 195;   // y of ground top-edge
       const GRAVITY    = 0.6;
       const JUMP_VY    = -13;
