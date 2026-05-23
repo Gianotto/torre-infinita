@@ -103,7 +103,14 @@
     }
     .btn.small:hover { border-color: #6688aa; color: #88aacc; }
 
-    .top-table { width: 340px; margin-top: 8px; }
+    .top-table {
+      width: 340px;
+      margin-top: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .top-table::-webkit-scrollbar { width: 6px; }
+    .top-table::-webkit-scrollbar-thumb { background: #2a3f5a; }
     .top-row {
       display: flex;
       justify-content: space-between;
@@ -304,7 +311,7 @@
         await submitScore(playerName, score);
         const top = await fetchTopScores();
         document.getElementById('finalScore').textContent = `SCORE: ${score}`;
-        document.getElementById('topListArea').innerHTML = renderTopList(top, score, 5);
+        document.getElementById('topListArea').innerHTML = renderTopList(top, score);
         document.getElementById('gameOverScreen').classList.remove('hidden');
       }
 
@@ -338,7 +345,7 @@
 
       // ── Game constants ─────────────────────────────────────────
       const W = 700, H = 400;
-      const GROUND_Y   = 195;   // y of ground top-edge
+      const GROUND_Y   = 240;   // y of ground top-edge
       const GRAVITY    = 0.6;
       const JUMP_VY    = -13;
       const INIT_SPEED = 5;
@@ -478,9 +485,9 @@
           const w = 30 + Math.floor(Math.random() * 26);
           obstacles.push({ type: 'crater', sx, y: GROUND_Y - 18, w, h: 18 });
         } else if (r < 0.75) {
-          obstacles.push({ type: 'ufo', sx, y: 165, w: 44, h: 20 });
+          obstacles.push({ type: 'ufo', sx, y: GROUND_Y - 30, w: 44, h: 20 });
         } else {
-          obstacles.push({ type: 'ufo', sx, y: 145, w: 44, h: 20 });
+          obstacles.push({ type: 'ufo', sx, y: GROUND_Y - 50, w: 44, h: 20 });
         }
       }
 
@@ -544,9 +551,9 @@
           const baseOff = pass * 180;
           for (let i = -1; i < 4; i++) {
             const hx = ((i * 240 + baseOff - hillOff * (0.3 + pass * 0.1)) % (W + 240)) - 60;
-            ctx.fillRect(hx,      155, 80, 40);
-            ctx.fillRect(hx + 20, 143, 50, 52);
-            ctx.fillRect(hx + 50, 160, 90, 35);
+            ctx.fillRect(hx,      GROUND_Y - 40, 80, 40);
+            ctx.fillRect(hx + 20, GROUND_Y - 52, 50, 52);
+            ctx.fillRect(hx + 50, GROUND_Y - 35, 90, 35);
           }
         }
       }
