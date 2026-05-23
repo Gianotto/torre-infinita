@@ -192,6 +192,7 @@
         <h2 style="color:#aaddff;font-size:24px;letter-spacing:4px;margin-bottom:10px">TOP 10</h2>
         <div id="top10List" class="top-table"></div>
         <button class="btn small" onclick="hideTop10Screen()" style="margin-top:16px">← VOLTAR</button>
+        <button class="btn small" onclick="window.location.href='/'" style="margin-top:4px">← HUB</button>
       </div>
 
       <!-- Game canvas + touch buttons -->
@@ -277,7 +278,9 @@
       }
 
       function startGame() {
-        playerName = (document.getElementById('playerName').value.trim().toUpperCase() || 'HERÓI').slice(0, 12);
+        const nameVal = document.getElementById('playerName').value.trim().toUpperCase();
+        if (!nameVal) return;
+        playerName = nameVal.slice(0, 12);
         hideAllScreens();
         if (window.matchMedia('(pointer: coarse)').matches) {
           document.getElementById('touchControls').style.display = 'block';
