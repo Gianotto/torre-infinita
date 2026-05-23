@@ -242,11 +242,11 @@
         } catch { /* ignore */ }
       }
 
-      function renderTopList(list, myScore) {
+      function renderTopList(list, myScore, max = 10) {
         if (!list || !list.length) {
           return '<div style="color:#2a3f5a;padding:10px;text-align:center">Sem scores ainda</div>';
         }
-        return list.map((e, i) => {
+        return list.slice(0, max).map((e, i) => {
           const mine = myScore !== null && e.score === myScore && e.name === playerName;
           const safeName = String(e.name).replace(/[<>&"]/g, c =>
             ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -304,7 +304,7 @@
         await submitScore(playerName, score);
         const top = await fetchTopScores();
         document.getElementById('finalScore').textContent = `SCORE: ${score}`;
-        document.getElementById('topListArea').innerHTML = renderTopList(top, score);
+        document.getElementById('topListArea').innerHTML = renderTopList(top, score, 5);
         document.getElementById('gameOverScreen').classList.remove('hidden');
       }
 
