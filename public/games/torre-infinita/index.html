@@ -456,8 +456,13 @@
       color: rgba(255, 215, 0, 0.9);
     }
 
-    #touchLeft  { left: 12px; }
-    #touchRight { right: 12px; }
+    #touchLeft {
+      left: 12px;
+    }
+
+    #touchRight {
+      right: 12px;
+    }
   </style>
 </head>
 
@@ -470,8 +475,7 @@
           <div class="subtitle">∙ INFINITA ∙</div>
         </div>
         <div class="name-form">
-          <label>INSIRA SEU NOME</label>
-          <input type="text" id="playerName" placeholder="HERÓI" maxlength="12" autocomplete="off">
+          <input type="text" id="playerName" placeholder="NOME" maxlength="12" autocomplete="off">
           <br>
           <button onclick="startGame()">JOGAR</button>
           <br>
@@ -480,7 +484,8 @@
             10</button>
           <br>
           <button onclick="window.location.href='/'"
-            style="margin-top: 8px; font-size: 12px; padding: 8px 20px; background: transparent; border-color: #5b2a86; color: #5b2a86; box-shadow: none; letter-spacing: 3px;">← HUB</button>
+            style="margin-top: 8px; font-size: 12px; padding: 8px 20px; background: transparent; border-color: #5b2a86; color: #5b2a86; box-shadow: none; letter-spacing: 3px;">←
+            HUB</button>
         </div>
         <div class="controls-hint">← → MOVER ∙ ESPAÇO PULAR</div>
       </div>
@@ -526,8 +531,6 @@
           <div id="top10List"></div>
         </div>
         <button class="restart-btn" onclick="location.reload()">JOGAR DE NOVO</button>
-        <button onclick="window.location.href='/'"
-          style="margin-top: 10px; font-family: 'Courier New', monospace; font-size: 13px; padding: 8px 24px; background: transparent; border: 2px solid #5b2a86; color: #5b2a86; cursor: pointer; letter-spacing: 3px;">← HUB</button>
       </div>
     </div>
   </div>
@@ -1349,7 +1352,7 @@
         document.getElementById('touchControls').style.display = 'block';
       }
 
-      const btnLeft  = document.getElementById('touchLeft');
+      const btnLeft = document.getElementById('touchLeft');
       const btnRight = document.getElementById('touchRight');
 
       function setTouchKey(btn, keyName, active) {
@@ -1372,7 +1375,7 @@
         }, { passive: false });
       }
 
-      addTouchBtn(btnLeft,  'ArrowLeft');
+      addTouchBtn(btnLeft, 'ArrowLeft');
       addTouchBtn(btnRight, 'ArrowRight');
 
       canvas.addEventListener('touchstart', e => {
