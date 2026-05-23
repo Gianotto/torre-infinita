@@ -9,6 +9,7 @@ Plataforma arcade com um novo jogo por semana. Cada acesso à raiz sorteia um jo
 | Jogo           | Estilo            | Adicionado   |
 |----------------|-------------------|--------------|
 | Torre Infinita | Platform endless  | 2025-01-01   |
+| Lua Runner     | Runner endless    | 2026-05-22   |
 
 ## Estrutura
 
