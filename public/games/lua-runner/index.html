@@ -76,6 +76,17 @@
       width: 200px;
     }
     input[type=text]:focus { border-color: #aaddff; }
+    input[type=text].input-error {
+      border-color: #aaddff;
+      box-shadow: 0 0 8px #aaddff, 0 0 18px #4488cc, 0 0 32px #2255aa;
+      animation: inputShake 0.35s ease;
+    }
+    @keyframes inputShake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      50%      { transform: translateX(6px); }
+      75%      { transform: translateX(-4px); }
+    }
 
     .btn {
       font-family: 'Courier New', monospace;
@@ -285,8 +296,16 @@
       }
 
       function startGame() {
-        const nameVal = document.getElementById('playerName').value.trim().toUpperCase();
-        if (!nameVal) return;
+        const nameInput = document.getElementById('playerName');
+        const nameVal = nameInput.value.trim().toUpperCase();
+        if (!nameVal) {
+          nameInput.classList.remove('input-error');
+          void nameInput.offsetWidth; // reflow to restart animation
+          nameInput.classList.add('input-error');
+          nameInput.focus();
+          setTimeout(() => nameInput.classList.remove('input-error'), 600);
+          return;
+        }
         playerName = nameVal.slice(0, 12);
         hideAllScreens();
         if (window.matchMedia('(pointer: coarse)').matches) {
