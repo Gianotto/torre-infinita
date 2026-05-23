@@ -1,8 +1,8 @@
-# Dependências (serão instaladas dentro do container)
+# Dependências (instaladas dentro do container via npm ci)
 node_modules/
 
-# Dados de produção
-scores.json
+# Dados de produção (montados via volume)
+scores/
 *.tmp
 data/
 backups/
@@ -19,13 +19,17 @@ logs/
 .env
 .env.*
 
-# Docs e configurações que não vão pro container
+# Docs e configs que não vão pro container
 DEPLOY.md
 README.md
+GAMES.md
 ecosystem.config.js
-nginx.conf.example
 docker-compose.yml
 .dockerignore
+docs/
+
+# Ferramentas locais
+.claude/
 
 # Sistema operacional
 .DS_Store

@@ -1,15 +1,14 @@
 # Dependências
 node_modules/
 
-# Dados de produção (NÃO subir o ranking pro Git!)
-scores.json
+# Scores de produção (dados runtime, não vão pro git)
+scores/*.json
 *.tmp
-data/
-backups/
 
 # Logs
 *.log
 npm-debug.log*
+logs/
 
 # Variáveis de ambiente
 .env
@@ -31,5 +30,8 @@ Thumbs.db
 .pm2/
 ecosystem.config.local.js
 
-scores/*.json
-logs/
+# Claude Code (configurações locais)
+.claude/
+
+# Docs internos de planejamento
+docs/superpowers/

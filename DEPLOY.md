@@ -1,260 +1,147 @@
-# 🚀 Deploy em VPS com nginx
+# Deploy — Random Games
 
-Guia passo a passo do zero ao deploy.
+## Deploy com Docker (recomendado)
 
-## 📋 Pré-requisitos
+### Pré-requisitos na VPS
+- Docker + Docker Compose instalados
+- Nginx como proxy reverso (opcional, mas recomendado para HTTPS)
+- Domínio apontando para o IP da VPS
 
-- VPS rodando Ubuntu/Debian (DigitalOcean, Hetzner, Contabo, Oracle Cloud, etc.)
-- Domínio apontando pro IP da VPS (registro A no DNS)
-- Acesso root via SSH
-
----
-
-## 1️⃣ Subir o código pro Git
-
-Localmente, na pasta `server/`:
+### Primeira vez
 
 ```bash
-git init
-git add .
-git commit -m "Torre Infinita — initial commit"
-git branch -M main
-git remote add origin git@github.com:seu-usuario/torre-infinita.git
-git push -u origin main
+# Clonar o repositório
+git clone https://github.com/Gianotto/torre-infinita.git random-games
+cd random-games
+
+# Subir o container
+docker compose up -d --build
+
+# Verificar que está rodando
+docker compose ps
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/games
 ```
 
-O `.gitignore` já está configurado para **NÃO** subir:
-- `node_modules/`
-- `scores.json` (ranking real fica só na VPS)
-- `.env`, logs, etc.
-
----
-
-## 2️⃣ Preparar a VPS (uma vez só)
-
-SSH na VPS:
+### Atualizar depois de um push
 
 ```bash
-ssh root@seu-ip
-```
-
-Instale o necessário:
-
-```bash
-# Node.js 20 LTS
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs nginx certbot python3-certbot-nginx git
-
-# PM2 (gerenciador de processo)
-npm install -g pm2
-
-# Usuário dedicado pra rodar o app (não rode como root!)
-adduser --system --group --shell /bin/bash torre
-```
-
----
-
-## 3️⃣ Clonar e instalar o projeto
-
-```bash
-# como root
-mkdir -p /var/www/torre
-chown torre:torre /var/www/torre
-
-# trocar pro usuário torre
-su - torre
-cd /var/www
-git clone https://github.com/seu-usuario/torre-infinita.git torre
-cd torre
-npm install --omit=dev
-```
-
-Crie a pasta de logs e o diretório de scores persistente:
-
-```bash
-mkdir -p /var/www/torre/logs
-exit  # voltar pro root
-mkdir -p /var/lib/random-games/scores
-chown -R torre:torre /var/lib/random-games
-```
-
----
-
-## 4️⃣ Iniciar o app com PM2
-
-```bash
-su - torre
-cd /var/www/torre
-pm2 start ecosystem.config.js
-pm2 save
-exit
-```
-
-Configure o PM2 pra iniciar no boot da VPS (como root):
-
-```bash
-env PATH=$PATH:/usr/bin pm2 startup systemd -u torre --hp /home/torre
-# rode o comando que o pm2 imprimir
-```
-
-Verifique que está rodando:
-
-```bash
-su - torre -c "pm2 status"
-curl http://localhost:3000/api/health      # {"ok":true,"uptime":...}
-curl http://localhost:3000/api/games       # lista de jogos
-```
-
----
-
-## 5️⃣ Configurar o nginx
-
-```bash
-# como root
-cp /var/www/torre/nginx.conf.example /etc/nginx/sites-available/torre
-nano /etc/nginx/sites-available/torre
-```
-
-**Edite os campos:**
-- `server_name torre.seudominio.com;` → coloque seu domínio
-- Linhas de SSL podem ficar como estão (certbot vai preencher)
-
-Ative o site e teste:
-
-```bash
-ln -s /etc/nginx/sites-available/torre /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default  # se existir
-nginx -t
-systemctl reload nginx
-```
-
----
-
-## 6️⃣ HTTPS gratuito com Let's Encrypt
-
-```bash
-certbot --nginx -d torre.seudominio.com
-```
-
-Responda as perguntas (email, aceitar termos, redirecionar HTTP→HTTPS = sim).
-
-Renovação automática já vem configurada. Pra testar:
-
-```bash
-certbot renew --dry-run
-```
-
----
-
-## ✅ Pronto!
-
-Acesse `https://torre.seudominio.com` e jogue.
-
----
-
-## 🔄 Como atualizar depois (workflow)
-
-Quando fizer mudanças no código:
-
-**Local:**
-```bash
-git add .
-git commit -m "ajuste no pulo"
-git push
-```
-
-**Na VPS:**
-```bash
-ssh root@seu-ip
-su - torre
-cd /var/www/torre
+cd random-games
 git pull
-npm install --omit=dev    # se mudou package.json
-pm2 restart random-games
-exit
+docker compose up -d --build
 ```
 
-Ou, pra automatizar, crie um script de deploy:
-
-```bash
-# /var/www/torre/deploy.sh
-#!/bin/bash
-set -e
-cd /var/www/torre
-git pull
-npm install --omit=dev
-pm2 restart random-games
-echo "✓ Deploy concluído"
-```
-
-```bash
-chmod +x /var/www/torre/deploy.sh
-```
-
-Aí pra atualizar é só `ssh root@seu-ip 'su - torre -c /var/www/torre/deploy.sh'`.
+Os scores são persistidos no volume Docker `scores-data` e sobrevivem a rebuilds.
 
 ---
 
-## 🔍 Comandos úteis no dia a dia
+## Nginx (proxy reverso + HTTPS)
+
+```nginx
+server {
+    listen 80;
+    server_name seudominio.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name seudominio.com;
+
+    # Certificado (gerado pelo certbot)
+    ssl_certificate     /etc/letsencrypt/live/seudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/seudominio.com/privkey.pem;
+
+    location / {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
 
 ```bash
-# Ver logs em tempo real
-su - torre -c "pm2 logs random-games"
+# Certbot (HTTPS gratuito)
+certbot --nginx -d seudominio.com
+```
 
-# Reiniciar app
-su - torre -c "pm2 restart random-games"
+---
 
-# Ver status / uso de memória
-su - torre -c "pm2 status"
+## Comandos úteis
 
-# Logs do nginx
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
+```bash
+# Logs em tempo real
+docker compose logs -f
+
+# Reiniciar sem rebuild
+docker compose restart
+
+# Status dos containers
+docker compose ps
+
+# Parar tudo
+docker compose down
 
 # Backup dos rankings
-cp -r /var/lib/random-games/scores /root/backups/scores-$(date +%F)
+docker compose exec app cat /data/scores/torre-infinita.json > backup-$(date +%F).json
 
-# Ver ranking de um jogo (sem abrir o navegador)
-cat /var/lib/random-games/scores/torre-infinita.json | python3 -m json.tool
+# Ver ranking atual
+docker compose exec app node -e "
+  const fs = require('fs');
+  const s = JSON.parse(fs.readFileSync('/data/scores/torre-infinita.json'));
+  s.forEach((e,i) => console.log(i+1, e.name, e.score));
+"
 ```
 
 ---
 
-## 🛡️ Hardening adicional (opcional)
+## Variáveis de ambiente
 
-### Firewall (UFW)
-```bash
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw enable
-```
+Definidas no `docker-compose.yml`. Para sobrescrever, crie um `docker-compose.override.yml`:
 
-### Fail2ban (proteção contra SSH brute force)
-```bash
-apt install -y fail2ban
-systemctl enable --now fail2ban
+```yaml
+services:
+  app:
+    environment:
+      MAX_SCORES: 20
+      RATE_LIMIT_MS: 5000
 ```
 
-### Backup automático do scores.json
-Crie `/etc/cron.daily/torre-backup`:
-```bash
-#!/bin/bash
-mkdir -p /var/backups/torre
-cp /var/lib/torre/scores.json /var/backups/torre/scores-$(date +%F).json
-find /var/backups/torre -name 'scores-*.json' -mtime +30 -delete
-```
-```bash
-chmod +x /etc/cron.daily/torre-backup
-```
+| Variável        | Padrão          | Descrição                        |
+|-----------------|-----------------|----------------------------------|
+| `PORT`          | `3000`          | Porta HTTP                       |
+| `SCORES_DIR`    | `/data/scores`  | Diretório dos rankings           |
+| `GAMES_FILE`    | `./games.json`  | Registro de jogos (no container) |
+| `MAX_SCORES`    | `10`            | Scores por jogo                  |
+| `RATE_LIMIT_MS` | `3000`          | Intervalo mínimo entre POSTs/IP  |
 
 ---
 
-## ❓ Troubleshooting
+## Adicionar um novo jogo
 
-**"502 Bad Gateway"** → Node não está rodando. `pm2 status` na VPS.
+1. Criar `public/games/{id}/index.html`
+2. Adicionar entrada em `games.json`
+3. Commit + push
+4. Na VPS: `git pull && docker compose up -d --build`
 
-**Rate limit bloqueando todos** → o `trust proxy` não está habilitado. Já está no código, mas confirme que o servidor foi atualizado: `pm2 restart torre`.
+Ver [GAMES.md](GAMES.md) para o passo-a-passo completo.
 
-**Ranking sumiu após restart** → o `SCORES_FILE` no `ecosystem.config.js` aponta pra dentro do repo. Mova pra `/var/lib/torre/scores.json` (já está configurado).
+---
 
-**Quero testar localmente antes do deploy** → `npm start` na pasta, abre `http://localhost:3000`.
+## Troubleshooting
+
+**Hub mostra "ERRO"**
+→ `/api/games` está falhando. Verifique os logs: `docker compose logs -f`
+→ Certifique-se de que o rebuild incluiu o `games.json` atualizado.
+
+**502 Bad Gateway**
+→ Container não está rodando. `docker compose up -d`
+
+**Scores sumindo após restart**
+→ O volume `scores-data` precisa estar montado. `docker compose ps` deve mostrar o volume.
+
+**Rate limit bloqueando todos**
+→ O Nginx precisa passar o header `X-Forwarded-For`. Confirme que `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` está no config.
