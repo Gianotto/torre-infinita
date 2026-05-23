@@ -26,8 +26,8 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3000,
-      SCORES_DIR: '/var/lib/random-games/scores',
-      GAMES_FILE: '/var/lib/random-games/games.json',
+      SCORES_DIR: '/var/lib/random-games/scores', // fora do repo — dados persistentes
+      // GAMES_FILE não precisa de override: games.json está no repo e é lido do __dirname
       MAX_SCORES: 10,
       RATE_LIMIT_MS: 3000
     },

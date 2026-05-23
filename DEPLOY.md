@@ -69,13 +69,13 @@ cd torre
 npm install --omit=dev
 ```
 
-Crie a pasta de logs e o local pro ranking persistente:
+Crie a pasta de logs e o diretório de scores persistente:
 
 ```bash
 mkdir -p /var/www/torre/logs
 exit  # voltar pro root
-mkdir -p /var/lib/torre
-chown torre:torre /var/lib/torre
+mkdir -p /var/lib/random-games/scores
+chown -R torre:torre /var/lib/random-games
 ```
 
 ---
@@ -101,8 +101,8 @@ Verifique que está rodando:
 
 ```bash
 su - torre -c "pm2 status"
-curl http://localhost:3000/api/health
-# deve retornar {"ok":true,"uptime":...}
+curl http://localhost:3000/api/health      # {"ok":true,"uptime":...}
+curl http://localhost:3000/api/games       # lista de jogos
 ```
 
 ---
@@ -170,7 +170,7 @@ su - torre
 cd /var/www/torre
 git pull
 npm install --omit=dev    # se mudou package.json
-pm2 restart torre
+pm2 restart random-games
 exit
 ```
 
@@ -183,7 +183,7 @@ set -e
 cd /var/www/torre
 git pull
 npm install --omit=dev
-pm2 restart torre
+pm2 restart random-games
 echo "✓ Deploy concluído"
 ```
 
@@ -199,23 +199,23 @@ Aí pra atualizar é só `ssh root@seu-ip 'su - torre -c /var/www/torre/deploy.s
 
 ```bash
 # Ver logs em tempo real
-su - torre -c "pm2 logs torre"
+su - torre -c "pm2 logs random-games"
 
 # Reiniciar app
-su - torre -c "pm2 restart torre"
+su - torre -c "pm2 restart random-games"
 
 # Ver status / uso de memória
 su - torre -c "pm2 status"
 
 # Logs do nginx
-tail -f /var/log/nginx/torre-access.log
-tail -f /var/log/nginx/torre-error.log
+tail -f /var/log/nginx/access.log
+tail -f /var/log/nginx/error.log
 
-# Backup do ranking
-cp /var/lib/torre/scores.json /root/backups/scores-$(date +%F).json
+# Backup dos rankings
+cp -r /var/lib/random-games/scores /root/backups/scores-$(date +%F)
 
-# Ver ranking atual (sem abrir o jogo)
-cat /var/lib/torre/scores.json | python3 -m json.tool
+# Ver ranking de um jogo (sem abrir o navegador)
+cat /var/lib/random-games/scores/torre-infinita.json | python3 -m json.tool
 ```
 
 ---
