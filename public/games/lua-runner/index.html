@@ -248,8 +248,10 @@
         }
         return list.map((e, i) => {
           const mine = myScore !== null && e.score === myScore && e.name === playerName;
+          const safeName = String(e.name).replace(/[<>&"]/g, c =>
+            ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
           return `<div class="top-row${mine ? ' highlight' : ''}">
-            <span>${i + 1}. ${e.name}</span>
+            <span>${i + 1}. ${safeName}</span>
             <span>${e.score}</span>
           </div>`;
         }).join('');
@@ -281,6 +283,7 @@
         if (window.matchMedia('(pointer: coarse)').matches) {
           document.getElementById('touchControls').style.display = 'block';
         }
+        cancelAnimationFrame(rafId);
         resetGame();
         state = 'playing';
         requestAnimationFrame(loop);
@@ -288,6 +291,7 @@
 
       function restartGame() {
         hideAllScreens();
+        cancelAnimationFrame(rafId);
         resetGame();
         state = 'playing';
         requestAnimationFrame(loop);
