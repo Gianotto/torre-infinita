@@ -3,20 +3,19 @@ services:
   # ── Aplicação Node.js ──────────────────────────────────────────────────────
   app:
     build: .
-    container_name: torre-app
+    container_name: random-games-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
-      SCORES_FILE: /data/scores.json
+      SCORES_DIR: /data/scores
       MAX_SCORES: 10
       RATE_LIMIT_MS: 3000
     volumes:
-      # Persiste o scores.json entre deploys e restarts
+      # Persiste os scores entre deploys e restarts
       - scores-data:/data
     ports:
-      # Expõe a porta 3000 para o host local
-      # O Nginx do host deve fazer o proxy pass para http://127.0.0.1:3000
+      # O Nginx do host faz proxy pass para http://127.0.0.1:3000
       - "127.0.0.1:3000:3000"
 
 # ── Volumes nomeados ───────────────────────────────────────────────────────

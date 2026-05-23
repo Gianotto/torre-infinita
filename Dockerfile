@@ -22,9 +22,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copia o código da aplicação
 COPY server.js ./
 COPY public/ ./public/
+COPY games.json ./
 
-# Volume para o scores.json persistente (mapeado pelo docker-compose)
-RUN mkdir -p /data && chown torre:torre /data
+# Volume para scores persistentes (mapeado pelo docker-compose)
+RUN mkdir -p /data/scores && chown -R torre:torre /data
 
 USER torre
 
@@ -34,7 +35,7 @@ EXPOSE 3000
 # Variáveis de ambiente padrão (sobrescritas pelo docker-compose)
 ENV NODE_ENV=production \
     PORT=3000 \
-    SCORES_FILE=/data/scores.json \
+    SCORES_DIR=/data/scores \
     MAX_SCORES=10 \
     RATE_LIMIT_MS=3000
 
