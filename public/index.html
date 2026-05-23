@@ -1,1386 +1,399 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torre Infinita — Pixel Art</title>
+  <title>Random Games</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html,
-    body {
-      width: 100%;
-      min-height: 100vh;
-      background:
-        radial-gradient(ellipse at top, #2d1b3d 0%, #0a0612 60%),
-        #0a0612;
+    html, body {
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at top, #2d1b3d 0%, #0a0612 60%), #0a0612;
       font-family: 'Courier New', monospace;
-      image-rendering: pixelated;
-      -webkit-font-smoothing: none;
       color: #ffd700;
-      overflow-x: hidden;
-    }
-
-    body {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 20px;
-    }
-
-    .tower-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #gameContainer {
-      position: relative;
-      width: 480px;
-      height: 720px;
-      max-width: 100vw;
-      background: #0a0612;
-      border: 4px solid #2d1b3d;
-      overflow: hidden;
-      box-shadow: 0 0 40px rgba(170, 80, 200, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.5);
-      border-radius: 6px;
-    }
-
-    #nameScreen {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at center, #2d1b3d 0%, #0a0612 80%);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
       overflow: hidden;
     }
 
-    #nameScreen::before {
-      content: '';
-      position: absolute;
+    #stars {
+      position: fixed;
       inset: 0;
-      background-image:
-        radial-gradient(2px 2px at 20% 30%, #fff, transparent),
-        radial-gradient(1px 1px at 60% 70%, #fff, transparent),
-        radial-gradient(1px 1px at 50% 50%, #fff, transparent),
-        radial-gradient(2px 2px at 80% 10%, #ffd700, transparent),
-        radial-gradient(1px 1px at 90% 60%, #fff, transparent),
-        radial-gradient(1px 1px at 33% 80%, #ffd700, transparent),
-        radial-gradient(2px 2px at 15% 65%, #fff, transparent);
-      background-size: 100% 100%;
-      opacity: 0.6;
-      animation: twinkle 3s ease-in-out infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--d) ease-in-out infinite;
     }
 
     @keyframes twinkle {
-
-      0%,
-      100% {
-        opacity: 0.3;
-      }
-
-      50% {
-        opacity: 0.8;
-      }
+      0%, 100% { opacity: 0.2; }
+      50%       { opacity: 0.9; }
     }
 
-    @keyframes float {
+    .hub {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 520px;
+      width: 100%;
+    }
 
-      0%,
-      100% {
-        transform: translateY(0);
-      }
+    .logo-top {
+      font-size: 11px;
+      letter-spacing: 10px;
+      color: #5b2a86;
+      margin-bottom: 8px;
+    }
 
-      50% {
-        transform: translateY(-8px);
-      }
+    .logo-main {
+      font-size: clamp(36px, 8vw, 64px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #ffd700;
+      text-shadow: 0 0 20px #ff6b9d, 4px 4px 0 #2d1b3d;
+      animation: glow-pulse 2s ease-in-out infinite;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .logo-sub {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: #ff5722;
+      margin-bottom: 48px;
+      animation: neon-orange 1.5s ease-in-out infinite;
     }
 
     @keyframes glow-pulse {
-
-      0%,
-      100% {
-        text-shadow: 0 0 20px #ff6b9d, 4px 4px 0 #2d1b3d, -2px -2px 0 #5b2a86;
-      }
-
-      50% {
-        text-shadow: 0 0 30px #ffd700, 4px 4px 0 #2d1b3d, -2px -2px 0 #5b2a86;
-      }
+      0%, 100% { text-shadow: 0 0 20px #ff6b9d, 4px 4px 0 #2d1b3d; }
+      50%       { text-shadow: 0 0 30px #ffd700, 4px 4px 0 #2d1b3d; }
     }
 
-    @keyframes neon-orange-pulse {
-
-      0%,
-      100% {
-        color: #ff5722;
-        text-shadow: 0 0 10px #ff5722, 0 0 20px #ff8c42, 2px 2px 0 #2d1b3d;
-      }
-
-      50% {
-        color: #ff8c42;
-        text-shadow: 0 0 20px #ff8c42, 0 0 40px #ffcb47, 2px 2px 0 #2d1b3d;
-      }
+    @keyframes neon-orange {
+      0%, 100% { color: #ff5722; text-shadow: 0 0 10px #ff5722; }
+      50%       { color: #ff8c42; text-shadow: 0 0 20px #ff8c42; }
     }
 
-    .title-stack {
-      text-align: center;
-      z-index: 2;
-      animation: float 4s ease-in-out infinite;
-    }
-
-    .title-stack h1 {
-      font-size: 64px;
-      color: #ffd700;
-      letter-spacing: 6px;
-      font-weight: 900;
-      margin-bottom: 4px;
-      animation: glow-pulse 2s ease-in-out infinite;
-    }
-
-    .title-stack .subtitle {
-      font-size: 14px;
-      letter-spacing: 8px;
-      margin-bottom: 40px;
-      font-weight: bold;
-      animation: neon-orange-pulse 1.5s ease-in-out infinite;
-    }
-
-    .name-form {
-      z-index: 2;
-      text-align: center;
-    }
-
-    .name-form label {
-      display: block;
-      font-size: 16px;
-      color: #aa6fce;
-      letter-spacing: 4px;
-      margin-bottom: 12px;
-    }
-
-    .name-form input {
-      font-family: 'Courier New', monospace;
-      font-size: 32px;
-      font-weight: bold;
-      padding: 18px 24px;
-      width: 320px;
-      max-width: 80vw;
-      text-align: center;
-      background: rgba(10, 6, 18, 0.8);
+    .slot-box {
+      background: rgba(10, 6, 18, 0.85);
       border: 3px solid #5b2a86;
-      color: #ffd700;
-      text-transform: uppercase;
+      padding: 20px 32px;
+      margin-bottom: 12px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(91, 42, 134, 0.4), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .slot-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: #aa6fce;
+      margin-bottom: 8px;
+    }
+
+    #slotName {
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 900;
       letter-spacing: 3px;
-      box-shadow: 0 0 20px rgba(91, 42, 134, 0.5), inset 0 0 10px rgba(0, 0, 0, 0.5);
+      color: #ffd700;
+      min-height: 44px;
+      transition: color 0.1s;
     }
 
-    .name-form input:focus {
-      outline: none;
-      border-color: #ffd700;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+    #slotName.spinning { color: #5b2a86; }
+
+    #slotSub {
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: #ff5722;
+      margin-top: 6px;
+      min-height: 18px;
     }
 
-    .name-form button {
-      margin-top: 28px;
+    #progressBar {
+      height: 4px;
+      background: #5b2a86;
+      margin-top: 12px;
+      display: none;
+    }
+
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background: #ffd700;
+      transition: width linear;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .btn {
       font-family: 'Courier New', monospace;
-      font-size: 22px;
       font-weight: bold;
-      padding: 14px 50px;
+      cursor: pointer;
+      letter-spacing: 3px;
+      transition: transform 0.1s, box-shadow 0.1s;
+      border-radius: 2px;
+    }
+
+    .btn-primary {
+      font-size: 20px;
+      padding: 14px 40px;
       background: linear-gradient(180deg, #d63384 0%, #5b2a86 100%);
       border: 3px solid #ffd700;
       color: #ffd700;
-      cursor: pointer;
-      letter-spacing: 4px;
       text-shadow: 2px 2px 0 #2d1b3d;
       box-shadow: 0 4px 0 #2d1b3d, 0 0 20px rgba(214, 51, 132, 0.5);
-      transition: transform 0.1s, box-shadow 0.1s;
     }
 
-    .name-form button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 0 #2d1b3d, 0 0 30px rgba(255, 215, 0, 0.7);
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #2d1b3d, 0 0 30px rgba(255, 215, 0, 0.7); }
+    .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #2d1b3d; }
+
+    .btn-secondary {
+      font-size: 14px;
+      padding: 10px 24px;
+      background: transparent;
+      border: 2px solid #5b2a86;
+      color: #aa6fce;
     }
 
-    .name-form button:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #2d1b3d;
-    }
+    .btn-secondary:hover { border-color: #aa6fce; color: #ffd700; }
 
-    .controls-hint {
-      position: absolute;
-      bottom: 20px;
-      font-size: 11px;
-      color: #5b2a86;
-      letter-spacing: 3px;
-      z-index: 2;
-      text-align: center;
-    }
-
-    #gameScreen {
-      display: none;
-      position: absolute;
-      inset: 0;
-    }
-
-    #gameCanvas {
-      display: block;
+    #gameList {
+      margin-top: 32px;
       width: 100%;
-      height: 100%;
     }
 
-    #hud {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
+    .game-list-title {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: #5b2a86;
+      margin-bottom: 10px;
+    }
+
+    .game-item {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .hud-card {
-      background: linear-gradient(180deg, rgba(45, 27, 61, 0.95) 0%, rgba(10, 6, 18, 0.95) 100%);
+      align-items: center;
       padding: 8px 14px;
-      border: 2px solid #5b2a86;
-      color: #ffd700;
+      border: 1px solid rgba(91, 42, 134, 0.3);
+      margin-bottom: 4px;
+      cursor: pointer;
+      color: #aa6fce;
       font-size: 12px;
       letter-spacing: 2px;
-      box-shadow: 0 2px 0 #2d1b3d, inset 0 0 10px rgba(0, 0, 0, 0.4);
-      min-width: 90px;
+      transition: all 0.15s;
     }
 
-    .hud-card .label {
+    .game-item:hover {
+      border-color: #ffd700;
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.05);
+    }
+
+    .game-item-tag {
       font-size: 9px;
-      color: #aa6fce;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .hud-card .value {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    #gameOverScreen {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at center, rgba(45, 27, 61, 0.95) 0%, rgba(10, 6, 18, 0.98) 100%);
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .game-over-title {
-      font-size: 48px;
-      color: #ff4757;
-      letter-spacing: 6px;
-      font-weight: 900;
-      text-shadow: 0 0 20px rgba(255, 71, 87, 0.8), 4px 4px 0 #2d1b3d;
-      margin-bottom: 8px;
-      animation: glow-pulse 1.5s ease-in-out infinite;
-    }
-
-    .game-over-sub {
-      font-size: 12px;
-      color: #aa6fce;
-      letter-spacing: 4px;
-      margin-bottom: 20px;
-    }
-
-    .score-card {
-      background: linear-gradient(180deg, rgba(214, 51, 132, 0.2) 0%, rgba(91, 42, 134, 0.2) 100%);
-      border: 3px solid #ffd700;
-      padding: 16px 32px;
-      margin-bottom: 20px;
-      text-align: center;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-    }
-
-    .score-card .label {
-      font-size: 11px;
-      color: #aa6fce;
-      letter-spacing: 3px;
-    }
-
-    .score-card .value {
-      font-size: 42px;
-      color: #ffd700;
-      font-weight: bold;
-      text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-      margin-top: 4px;
-    }
-
-    .top-10-panel {
-      background: rgba(10, 6, 18, 0.8);
-      border: 2px solid #5b2a86;
-      padding: 12px 16px;
-      width: 340px;
-      max-width: 90vw;
-      max-height: 260px;
-      overflow-y: auto;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .top-10-panel::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .top-10-panel::-webkit-scrollbar-thumb {
-      background: #5b2a86;
-    }
-
-    .top-10-title {
-      font-size: 12px;
-      color: #aa6fce;
-      letter-spacing: 4px;
-      text-align: center;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #5b2a86;
-    }
-
-    .top-row {
-      display: grid;
-      grid-template-columns: 36px 1fr auto;
-      gap: 8px;
-      align-items: center;
-      padding: 5px 4px;
-      font-size: 13px;
-      color: #c9a9d9;
-      border-bottom: 1px solid rgba(91, 42, 134, 0.3);
-    }
-
-    .top-row.gold {
-      color: #ffd700;
-      font-weight: bold;
-    }
-
-    .top-row.silver {
-      color: #d0d0d0;
-      font-weight: bold;
-    }
-
-    .top-row.bronze {
-      color: #cd7f32;
-      font-weight: bold;
-    }
-
-    .top-row.current {
-      background: rgba(255, 215, 0, 0.1);
-    }
-
-    .rank-badge {
-      font-size: 11px;
+      color: #5b2a86;
       letter-spacing: 1px;
     }
 
-    .restart-btn {
-      margin-top: 18px;
-      font-family: 'Courier New', monospace;
-      font-size: 18px;
-      font-weight: bold;
-      padding: 12px 40px;
-      background: linear-gradient(180deg, #d63384 0%, #5b2a86 100%);
-      border: 3px solid #ffd700;
-      color: #ffd700;
-      cursor: pointer;
+    #statusMsg {
+      font-size: 12px;
+      color: #5b2a86;
       letter-spacing: 3px;
-      box-shadow: 0 4px 0 #2d1b3d, 0 0 20px rgba(214, 51, 132, 0.5);
-    }
-
-    .restart-btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .restart-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #2d1b3d;
+      margin-top: 16px;
     }
 
     .footer {
-      margin-top: 16px;
-      font-size: 10px;
-      color: #5b2a86;
-      letter-spacing: 3px;
-      text-align: center;
-    }
-
-    #touchControls {
-      display: none;
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 120px;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .touch-btn {
-      position: absolute;
+      position: fixed;
       bottom: 12px;
-      width: 80px;
-      height: 80px;
-      background: rgba(91, 42, 134, 0.35);
-      border: 3px solid rgba(255, 215, 0, 0.4);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      color: rgba(255, 215, 0, 0.5);
-      font-family: monospace;
-      pointer-events: all;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+      font-size: 9px;
+      color: #2d1b3d;
+      letter-spacing: 4px;
     }
-
-    .touch-btn.active {
-      background: rgba(91, 42, 134, 0.7);
-      border-color: rgba(255, 215, 0, 0.9);
-      color: rgba(255, 215, 0, 0.9);
-    }
-
-    #touchLeft  { left: 12px; }
-    #touchRight { right: 12px; }
   </style>
 </head>
-
 <body>
-  <div class="tower-wrap">
-    <div id="gameContainer">
-      <div id="nameScreen">
-        <div class="title-stack">
-          <h1>TORRE</h1>
-          <div class="subtitle">∙ INFINITA ∙</div>
-        </div>
-        <div class="name-form">
-          <label>INSIRA SEU NOME</label>
-          <input type="text" id="playerName" placeholder="HERÓI" maxlength="12" autocomplete="off">
-          <br>
-          <button onclick="startGame()">JOGAR</button>
-          <br>
-          <button onclick="showTop10Screen()"
-            style="margin-top: 15px; font-size: 16px; padding: 10px 30px; background: transparent; box-shadow: none;">TOP
-            10</button>
-        </div>
-        <div class="controls-hint">← → MOVER ∙ ESPAÇO PULAR</div>
-      </div>
 
-      <div id="gameScreen">
-        <canvas id="gameCanvas" width="480" height="720"></canvas>
-        <div id="touchControls">
-          <div class="touch-btn" id="touchLeft">&#8592;</div>
-          <div class="touch-btn" id="touchRight">&#8594;</div>
-        </div>
-        <div id="hud">
-          <div class="hud-card">
-            <span class="label">ALTURA</span>
-            <span class="value" id="scoreValue">0</span>
-          </div>
-          <div class="hud-card" style="text-align:right">
-            <span class="label">HERÓI</span>
-            <span class="value" id="playerNameDisplay">-</span>
-          </div>
-        </div>
-      </div>
+<div id="stars"></div>
 
-      <div id="top10Screen"
-        style="display:none; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(45,27,61,0.95) 0%, rgba(10,6,18,0.98) 100%); flex-direction:column; justify-content:center; align-items:center; z-index:1000; padding:20px;">
-        <div class="top-10-panel">
-          <div class="top-10-title">★ TOP 10 ESCALADORES ★</div>
-          <div id="top10ListOnly">
-            <div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">CARREGANDO...</div>
-          </div>
-        </div>
-        <button class="restart-btn" onclick="closeTop10()">VOLTAR</button>
-      </div>
+<div class="hub">
+  <div class="logo-top">∙ ∙ ∙</div>
+  <div class="logo-main">RANDOM</div>
+  <div class="logo-main" style="font-size: clamp(28px, 6vw, 48px); margin-bottom:4px;">GAMES</div>
+  <div class="logo-sub">∙ ARCADE EDITION ∙</div>
 
-      <div id="gameOverScreen">
-        <div class="game-over-title">DERROTADO</div>
-        <div class="game-over-sub">A TORRE TE VENCEU</div>
-        <div class="score-card">
-          <div class="label">ALTURA ALCANÇADA</div>
-          <div class="value" id="finalScore">0</div>
-        </div>
-        <div class="top-10-panel">
-          <div class="top-10-title">★ TOP 10 ESCALADORES ★</div>
-          <div id="top10List"></div>
-        </div>
-        <button class="restart-btn" onclick="location.reload()">JOGAR DE NOVO</button>
-      </div>
-    </div>
+  <div class="slot-box">
+    <div class="slot-label">JOGO SELECIONADO</div>
+    <div id="slotName">CARREGANDO...</div>
+    <div id="slotSub"></div>
   </div>
-  <div class="footer">TORRE INFINITA ∙ PIXEL ART EDITION</div>
 
-  <script>
-    (function () {
-      const canvas = document.getElementById('gameCanvas');
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
+  <div id="progressBar"><div id="progressFill"></div></div>
 
-      const W = canvas.width;
-      const H = canvas.height;
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btnPlay" onclick="launchSelected()" style="display:none">JOGAR</button>
+    <button class="btn btn-secondary" id="btnReroll" onclick="reroll()" style="display:none">⟳ OUTRO JOGO</button>
+  </div>
 
-      const PAL = {
-        bg0: '#0a0612', bg1: '#1a0f2e', bg2: '#2d1b3d', bg3: '#4a2a5e',
-        wall: '#3d2557', wallDark: '#2a1740', wallLight: '#5b3580',
-        stone: '#8b6db3', stoneDark: '#5b4080',
-        brick: '#6b4a8c', brickDark: '#3d2557', brickLight: '#9d7ec0',
-        gold: '#ffd700', goldDark: '#c9a330', goldLight: '#fff4a3',
-        fire1: '#ff8c42', fire2: '#ff5722', fire3: '#ffcb47',
-        danger: '#ff4757', dangerDark: '#b32b3a',
-        spring: '#4ecdc4', springDark: '#2a8e87',
-        hero: '#ffe0b3', heroSkin: '#ffcc99', heroBody: '#5b9bd5', heroPants: '#2d5a8e',
-        heroBoot: '#3d2557', heroSword: '#d0d0d0', heroHair: '#3d2557',
-        moss: '#7cb342', mossDark: '#558b2f',
-        text: '#ffd700', textDim: '#aa6fce'
-      };
+  <div id="statusMsg"></div>
 
-      function rand(a, b) { return a + Math.random() * (b - a); }
-      function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  <div id="gameList" style="display:none">
+    <div class="game-list-title">∙ TODOS OS JOGOS ∙</div>
+    <div id="gameListItems"></div>
+  </div>
+</div>
 
-      const stars = [];
-      for (let i = 0; i < 80; i++) {
-        stars.push({
-          x: Math.random() * W,
-          y: Math.random() * H * 3,
-          size: Math.random() < 0.8 ? 1 : 2,
-          brightness: rand(0.3, 1),
-          twinkle: Math.random() * Math.PI * 2
-        });
+<div class="footer">RANDOM GAMES ∙ NOVO JOGO TODA SEMANA</div>
+
+<script>
+  (function () {
+    const container = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() < 0.7 ? 1 : 2;
+      s.style.cssText = `
+        left:${Math.random()*100}%;
+        top:${Math.random()*100}%;
+        width:${size}px; height:${size}px;
+        --d:${(2 + Math.random() * 3).toFixed(1)}s;
+        animation-delay:${(Math.random() * 3).toFixed(1)}s;
+        opacity:${(0.2 + Math.random() * 0.6).toFixed(2)};
+      `;
+      container.appendChild(s);
+    }
+  })();
+
+  let games        = [];
+  let selectedGame = null;
+  let spinTimer    = null;
+  let redirectTimer = null;
+
+  const slotName    = document.getElementById('slotName');
+  const slotSub     = document.getElementById('slotSub');
+  const btnPlay     = document.getElementById('btnPlay');
+  const btnReroll   = document.getElementById('btnReroll');
+  const statusMsg   = document.getElementById('statusMsg');
+  const progressBar = document.getElementById('progressBar');
+  const progressFill= document.getElementById('progressFill');
+
+  async function init() {
+    try {
+      const res = await fetch('/api/games', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      games = await res.json();
+
+      if (!games.length) {
+        slotName.textContent = 'EM BREVE...';
+        statusMsg.textContent = 'nenhum jogo disponível ainda';
+        return;
       }
 
-      const particles = [];
-      function addParticle(x, y, opts = {}) {
-        particles.push({
-          x, y,
-          vx: opts.vx ?? rand(-2, 2),
-          vy: opts.vy ?? rand(-3, -1),
-          life: opts.life ?? 30,
-          maxLife: opts.life ?? 30,
-          size: opts.size ?? 3,
-          color: opts.color ?? PAL.gold,
-          gravity: opts.gravity ?? 0.15,
-          shrink: opts.shrink ?? true
-        });
+      renderGameList();
+      document.getElementById('gameList').style.display = 'block';
+      reroll();
+    } catch (err) {
+      slotName.textContent = 'ERRO';
+      statusMsg.textContent = 'falha ao carregar jogos — tente recarregar';
+      console.error(err);
+    }
+  }
+
+  function pickRandom() {
+    return games[Math.floor(Math.random() * games.length)];
+  }
+
+  function reroll() {
+    clearTimeout(redirectTimer);
+    progressBar.style.display = 'none';
+    progressFill.style.width  = '0%';
+    btnPlay.style.display     = 'none';
+    btnReroll.style.display   = 'none';
+    statusMsg.textContent     = '';
+
+    if (games.length === 1) {
+      selectedGame = games[0];
+      showSelected();
+      return;
+    }
+
+    let ticks = 0;
+    const totalTicks = 18 + Math.floor(Math.random() * 10);
+    const candidates = [...games];
+
+    clearInterval(spinTimer);
+    spinTimer = setInterval(() => {
+      ticks++;
+      const g = candidates[ticks % candidates.length];
+      slotName.textContent = g.name.toUpperCase();
+      slotName.classList.toggle('spinning', true);
+      slotSub.textContent  = '';
+
+      if (ticks >= totalTicks) {
+        clearInterval(spinTimer);
+        selectedGame = pickRandom();
+        slotName.textContent = selectedGame.name.toUpperCase();
+        slotName.classList.remove('spinning');
+        slotSub.textContent  = selectedGame.subtitle || '';
+        showSelected();
       }
-
-      function drawTorchFlame(x, y, t) {
-        const flicker = Math.sin(t * 0.3 + x) * 1.5;
-        const grad = ctx.createRadialGradient(x, y - 4, 0, x, y - 4, 50);
-        grad.addColorStop(0, 'rgba(255, 180, 60, 0.4)');
-        grad.addColorStop(0.5, 'rgba(255, 100, 40, 0.15)');
-        grad.addColorStop(1, 'rgba(255, 100, 40, 0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(x - 50, y - 54, 100, 100);
-
-        ctx.fillStyle = '#3d2557';
-        ctx.fillRect(x - 2, y, 4, 12);
-        ctx.fillStyle = '#5b3580';
-        ctx.fillRect(x - 3, y - 2, 6, 3);
-
-        ctx.fillStyle = PAL.fire2;
-        ctx.beginPath();
-        ctx.ellipse(x + flicker * 0.3, y - 4, 5, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = PAL.fire1;
-        ctx.beginPath();
-        ctx.ellipse(x + flicker * 0.5, y - 6, 3.5, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = PAL.fire3;
-        ctx.beginPath();
-        ctx.ellipse(x + flicker, y - 8, 2, 3.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (Math.random() < 0.15) {
-          addParticle(x + flicker, y - 10, {
-            vx: rand(-0.5, 0.5), vy: rand(-2, -1),
-            life: 20, size: 1.5, color: PAL.fire3, gravity: -0.05
-          });
-        }
-      }
-
-      function drawTowerWalls(cameraY) {
-        const grad = ctx.createLinearGradient(0, 0, 0, H);
-        grad.addColorStop(0, PAL.bg0);
-        grad.addColorStop(0.4, PAL.bg1);
-        grad.addColorStop(0.8, PAL.bg2);
-        grad.addColorStop(1, PAL.bg1);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        const starOffset = cameraY * 0.1;
-        stars.forEach((s) => {
-          const y = ((s.y + starOffset) % (H * 1.5)) - H * 0.25;
-          const tw = 0.5 + 0.5 * Math.sin(s.twinkle + cameraY * 0.01);
-          ctx.fillStyle = `rgba(255, 240, 200, ${s.brightness * tw})`;
-          ctx.fillRect(s.x, y, s.size, s.size);
-        });
-
-        const wallOffset = cameraY * 0.5;
-        const wallW = 60;
-        drawWall(0, wallW, cameraY, wallOffset);
-        drawWall(W - wallW, wallW, cameraY, wallOffset);
-
-        const pillarOff = cameraY * 0.3;
-        for (let py = -200; py < H + 200; py += 180) {
-          const y = ((py + pillarOff) % (H + 400)) - 200;
-          drawPillar(W / 2 - 4, y, 8, 60);
-        }
-      }
-
-      function drawWall(x, w, cameraY, offset) {
-        ctx.fillStyle = PAL.wallDark;
-        ctx.fillRect(x, 0, w, H);
-
-        const brickH = 24;
-        const brickW = 30;
-        const startY = Math.floor(offset / brickH) * brickH - offset;
-
-        for (let by = startY - brickH; by < H + brickH; by += brickH) {
-          const row = Math.floor((by + offset) / brickH);
-          const xOff = (row % 2) * (brickW / 2);
-          for (let bx = 0; bx < w + brickW; bx += brickW) {
-            const tx = x + ((bx - xOff) % w);
-            ctx.fillStyle = PAL.brick;
-            ctx.fillRect(tx, by, brickW - 2, brickH - 2);
-            ctx.fillStyle = PAL.brickLight;
-            ctx.fillRect(tx, by, brickW - 2, 2);
-            ctx.fillStyle = PAL.brickDark;
-            ctx.fillRect(tx, by + brickH - 4, brickW - 2, 2);
-            if ((row * 7 + bx) % 11 === 0) {
-              ctx.fillStyle = PAL.mossDark;
-              ctx.fillRect(tx, by + brickH - 4, 4, 2);
-            }
-          }
-        }
-
-        const sideGrad = x === 0
-          ? ctx.createLinearGradient(0, 0, w, 0)
-          : ctx.createLinearGradient(x, 0, x + w, 0);
-        if (x === 0) {
-          sideGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
-          sideGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        } else {
-          sideGrad.addColorStop(0, 'rgba(0,0,0,0)');
-          sideGrad.addColorStop(1, 'rgba(0,0,0,0.5)');
-        }
-        ctx.fillStyle = sideGrad;
-        ctx.fillRect(x, 0, w, H);
-      }
-
-      function drawPillar(x, y, w, h) {
-        ctx.fillStyle = 'rgba(45, 27, 61, 0.4)';
-        ctx.fillRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(91, 53, 128, 0.3)';
-        ctx.fillRect(x, y, 2, h);
-      }
-
-      function drawPlatform(p, t) {
-        const x = p.x, y = p.y, w = p.width, h = p.height;
-
-        if (p.type === 'spring') {
-          ctx.fillStyle = PAL.springDark;
-          ctx.fillRect(x, y + 2, w, h);
-          ctx.fillStyle = PAL.spring;
-          ctx.fillRect(x, y, w, h - 4);
-          ctx.fillStyle = '#a8f0ec';
-          ctx.fillRect(x + 2, y, w - 4, 2);
-          const pulse = 0.5 + 0.5 * Math.sin(t * 0.1);
-          ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-          for (let i = 4; i < w - 4; i += 8) {
-            ctx.fillRect(x + i, y + 5, 2, 2);
-          }
-        } else if (p.type === 'moving') {
-          ctx.fillStyle = PAL.goldDark;
-          ctx.fillRect(x, y + 2, w, h);
-          ctx.fillStyle = PAL.gold;
-          ctx.fillRect(x, y, w, h - 4);
-          ctx.fillStyle = PAL.goldLight;
-          ctx.fillRect(x + 2, y, w - 4, 2);
-          ctx.fillStyle = PAL.goldDark;
-          for (let i = 6; i < w - 4; i += 10) {
-            ctx.fillRect(x + i, y + 4, 1, h - 8);
-          }
-        } else {
-          ctx.fillStyle = PAL.stoneDark;
-          ctx.fillRect(x, y + 2, w, h);
-          ctx.fillStyle = PAL.stone;
-          ctx.fillRect(x, y, w, h - 4);
-          ctx.fillStyle = '#b89dd1';
-          ctx.fillRect(x + 2, y, w - 4, 2);
-          ctx.fillStyle = PAL.stoneDark;
-          ctx.fillRect(x, y + h - 4, w, 2);
-          ctx.fillStyle = PAL.stoneDark;
-          ctx.fillRect(x + 6, y + 4, 2, 2);
-          ctx.fillRect(x + w - 12, y + 6, 2, 2);
-          ctx.fillRect(x + w / 2, y + 5, 2, 2);
-          ctx.fillStyle = PAL.mossDark;
-          ctx.fillRect(x, y - 1, 3, 2);
-          ctx.fillRect(x + w - 3, y - 1, 3, 2);
-          ctx.fillStyle = PAL.moss;
-          ctx.fillRect(x + 1, y - 2, 1, 1);
-          ctx.fillRect(x + w - 2, y - 2, 1, 1);
-        }
-      }
-
-      function drawSpike(s, t) {
-        const x = s.x, y = s.y, w = s.width, h = s.height;
-        ctx.fillStyle = PAL.dangerDark;
-        ctx.fillRect(x, y + h - 4, w, 4);
-
-        const spikeCount = 3;
-        const spikeW = w / spikeCount;
-        for (let i = 0; i < spikeCount; i++) {
-          const sx = x + i * spikeW;
-          ctx.fillStyle = PAL.danger;
-          ctx.beginPath();
-          ctx.moveTo(sx + spikeW / 2, y);
-          ctx.lineTo(sx + spikeW, y + h - 2);
-          ctx.lineTo(sx, y + h - 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = '#ff7a85';
-          ctx.beginPath();
-          ctx.moveTo(sx + spikeW / 2, y);
-          ctx.lineTo(sx + spikeW / 2 + 1, y + 6);
-          ctx.lineTo(sx + spikeW / 2 - 1, y + 6);
-          ctx.closePath();
-          ctx.fill();
-        }
-        const glow = 0.3 + 0.2 * Math.sin(t * 0.15);
-        ctx.fillStyle = `rgba(255, 71, 87, ${glow})`;
-        ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-      }
-
-      function drawCoin(c, t) {
-        const spin = Math.sin(t * 0.15 + c.x * 0.1);
-        const wScale = Math.abs(spin) * 6 + 2;
-        const cx = c.x;
-        const cy = c.y + Math.sin(t * 0.08 + c.x * 0.05) * 3;
-
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
-        grad.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
-        grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(cx - 20, cy - 20, 40, 40);
-
-        ctx.fillStyle = PAL.goldDark;
-        ctx.fillRect(cx - wScale, cy - 7, wScale * 2, 14);
-        ctx.fillStyle = PAL.gold;
-        ctx.fillRect(cx - wScale + 1, cy - 6, wScale * 2 - 2, 12);
-        ctx.fillStyle = PAL.goldLight;
-        if (spin > 0) {
-          ctx.fillRect(cx - wScale + 1, cy - 6, 2, 12);
-        }
-        if (wScale > 4) {
-          ctx.fillStyle = PAL.goldDark;
-          ctx.fillRect(cx - 1, cy - 4, 2, 8);
-        }
-      }
-
-      function drawHero(p, t) {
-        const x = Math.round(p.x);
-        const y = Math.round(p.y);
-        const facingLeft = p.facing < 0;
-        const isJumping = p.velocityY < -1;
-        const isFalling = p.velocityY > 2;
-        const walkFrame = Math.floor(t * 0.2) % 2;
-
-        ctx.save();
-        if (facingLeft) {
-          ctx.translate(x + p.width, y);
-          ctx.scale(-1, 1);
-        } else {
-          ctx.translate(x, y);
-        }
-
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(2, p.height - 1, p.width - 4, 2);
-
-        ctx.fillStyle = PAL.heroPants;
-        if (isJumping) {
-          ctx.fillRect(4, 16, 4, 6);
-          ctx.fillRect(12, 16, 4, 4);
-        } else if (isFalling) {
-          ctx.fillRect(4, 16, 4, 4);
-          ctx.fillRect(12, 16, 4, 6);
-        } else if (Math.abs(p.velocityX) > 0.5) {
-          if (walkFrame === 0) {
-            ctx.fillRect(4, 16, 4, 6);
-            ctx.fillRect(12, 16, 4, 5);
-          } else {
-            ctx.fillRect(4, 16, 4, 5);
-            ctx.fillRect(12, 16, 4, 6);
-          }
-        } else {
-          ctx.fillRect(4, 16, 4, 6);
-          ctx.fillRect(12, 16, 4, 6);
-        }
-        ctx.fillStyle = PAL.heroBoot;
-        ctx.fillRect(3, 21, 5, 2);
-        ctx.fillRect(12, 21, 5, 2);
-
-        ctx.fillStyle = PAL.heroBody;
-        ctx.fillRect(4, 9, 12, 8);
-        ctx.fillStyle = PAL.heroBoot;
-        ctx.fillRect(4, 15, 12, 2);
-        ctx.fillStyle = PAL.gold;
-        ctx.fillRect(9, 15, 2, 2);
-
-        ctx.fillStyle = PAL.heroSkin;
-        if (isJumping) {
-          ctx.fillRect(1, 8, 3, 5);
-          ctx.fillRect(16, 8, 3, 5);
-        } else {
-          ctx.fillRect(2, 10, 3, 6);
-          ctx.fillRect(15, 10, 3, 6);
-        }
-
-        ctx.fillStyle = PAL.heroSkin;
-        ctx.fillRect(5, 2, 10, 8);
-        ctx.fillStyle = PAL.heroHair;
-        ctx.fillRect(4, 1, 12, 4);
-        ctx.fillRect(4, 4, 2, 2);
-        ctx.fillRect(14, 4, 2, 2);
-        ctx.fillStyle = '#1a0f2e';
-        ctx.fillRect(11, 6, 2, 2);
-        ctx.fillRect(10, 8, 2, 1);
-
-        ctx.fillStyle = '#a52a4f';
-        ctx.fillRect(15, 9, 2, 8);
-        ctx.fillStyle = '#d63384';
-        ctx.fillRect(15, 9, 1, 8);
-
-        ctx.restore();
-
-        if (isJumping && Math.random() < 0.3) {
-          addParticle(x + p.width / 2 + rand(-4, 4), y + p.height, {
-            vx: rand(-0.5, 0.5), vy: rand(0.5, 1.5),
-            life: 15, size: 2, color: PAL.stoneDark, gravity: 0.1
-          });
-        }
-      }
-
-      let playerName = '';
-      let score = 0;
-      let highestY = 0;
-      let coinsCollected = 0;
-      let gameActive = false;
-      let frameCount = 0;
-
-      // ═══════════════════════════════════════════════════════════
-      // ⚙️  AJUSTES DO PULO — mexa aqui pra mudar a "sensação" do salto
-      // ───────────────────────────────────────────────────────────
-      //  jumpPower : força inicial do pulo (maior = mais alto)
-      //  gravity   : puxa pra baixo a cada frame (menor = mais flutuante)
-      //  maxFall   : velocidade máxima de queda (cap pra não acelerar demais)
-      //  speed     : velocidade horizontal (movimento lateral)
-      // ═══════════════════════════════════════════════════════════
-      const player = {
-        x: W / 2 - 10, y: H - 100,
-        width: 20, height: 24,
-        velocityX: 0, velocityY: 0,
-        isJumping: false,
-        jumpPower: 11,      // ← era 14  (pulo menos explosivo)
-        gravity: 0.38,      // ← era 0.55 (queda mais leve, voo mais longo)
-        maxFall: 12,        // ← era 16   (queda máxima mais lenta)
-        speed: 4.5,
-        facing: 1,
-        invulnTimer: 0
-      };
-
-      let platforms = [];
-      let spikes = [];
-      let coins = [];
-      let cameraY = 0;
-      let torches = [];
-
-      function regenTorches() {
-        torches = [];
-        for (let ty = cameraY - H; ty < cameraY + H * 2; ty += 160) {
-          const side = Math.random() < 0.5 ? 'left' : 'right';
-          torches.push({
-            x: side === 'left' ? 35 : W - 35,
-            y: ty
-          });
-        }
-      }
-
-      const keys = {};
-
-      function generateInitialLevel() {
-        platforms = [];
-        spikes = [];
-        coins = [];
-
-        platforms.push({ x: W / 2 - 60, y: H - 60, width: 120, height: 16, type: 'normal' });
-
-        for (let i = 1; i < 20; i++) {
-          const y = H - 60 - i * 85 + rand(-15, 15);
-          const w = rand(55, 85);
-          const x = clamp(rand(70, W - 70 - w), 70, W - 70 - w);
-          const r = Math.random();
-          const type = r < 0.15 ? 'spring' : (r < 0.25 && i > 3 ? 'moving' : 'normal');
-
-          const plat = { x, y, width: w, height: 14, type };
-          if (type === 'moving') {
-            plat.dir = Math.random() < 0.5 ? -1 : 1;
-            plat.range = rand(40, 80);
-            plat.startX = x;
-          }
-          platforms.push(plat);
-
-          if (i > 3 && Math.random() < 0.35) {
-            const sx = clamp(rand(70, W - 90), 70, W - 90);
-            spikes.push({ x: sx, y: y - 18, width: 20, height: 18 });
-          }
-
-          if (Math.random() < 0.5) {
-            coins.push({ x: x + w / 2, y: y - 30, collected: false });
-          }
-        }
-        regenTorches();
-      }
-
-      async function showTop10Screen() {
-        document.getElementById('nameScreen').style.display = 'none';
-        document.getElementById('top10Screen').style.display = 'flex';
-        const top = await fetchTopScores();
-        let html = '';
-        if (!top || !top.length) {
-          html = '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">SEM RECORDES AINDA</div>';
-        } else {
-          top.forEach((s, i) => {
-            const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-            const icon = i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
-            html += `<div class="top-row ${cls}">
-              <div class="rank-badge">${icon}</div>
-              <div>${s.name}</div>
-              <div>${s.score}</div>
-            </div>`;
-          });
-        }
-        document.getElementById('top10ListOnly').innerHTML = html;
-      }
-
-      function closeTop10() {
-        document.getElementById('top10Screen').style.display = 'none';
-        document.getElementById('nameScreen').style.display = 'flex';
-      }
-
-      function startGame() {
-        const nameInput = document.getElementById('playerName');
-        const v = (nameInput.value || '').trim().toUpperCase();
-        if (!v) { nameInput.focus(); nameInput.style.borderColor = '#ff4757'; return; }
-        playerName = v.substring(0, 12);
-
-        document.getElementById('nameScreen').style.display = 'none';
-        document.getElementById('gameScreen').style.display = 'block';
-        document.getElementById('playerNameDisplay').textContent = playerName;
-
-        // resetar estado do jogo
-        player.x = W / 2 - 10;
-        player.y = H - 100;
-        player.velocityX = 0;
-        player.velocityY = 0;
-        player.isJumping = false;
-        highestY = -player.y;        // ← FIX: inicializa com a altura inicial
-        cameraY = player.y - H * 0.55;
-        score = 0;
-        coinsCollected = 0;
-        document.getElementById('scoreValue').textContent = 0;
-
-        generateInitialLevel();
-        gameActive = true;
-        requestAnimationFrame(gameLoop);
-      }
-      window.startGame = startGame;
-      window.showTop10Screen = showTop10Screen;
-      window.closeTop10 = closeTop10;
-
-      function update() {
-        frameCount++;
-        player.velocityX = 0;
-        if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
-          player.velocityX = -player.speed;
-          player.facing = -1;
-        }
-        if (keys['ArrowRight'] || keys['d'] || keys['D']) {
-          player.velocityX = player.speed;
-          player.facing = 1;
-        }
-
-        player.velocityY += player.gravity;
-        if (player.velocityY > player.maxFall) player.velocityY = player.maxFall;
-
-        player.x += player.velocityX;
-        player.y += player.velocityY;
-
-        if (player.x < 60) player.x = 60;
-        if (player.x + player.width > W - 60) player.x = W - 60 - player.width;
-
-        if (player.invulnTimer > 0) player.invulnTimer--;
-
-        // ═══════════════════════════════════════════════════════════
-        // 📷 CÂMERA — só sobe, nunca desce
-        // ───────────────────────────────────────────────────────────
-        // Travar a câmera no ponto mais alto faz com que, ao cair, o
-        // player desça pela tela visivelmente até sumir por baixo.
-        // ═══════════════════════════════════════════════════════════
-        const targetCamera = player.y - H * 0.55;
-        if (targetCamera < cameraY) {
-          cameraY += (targetCamera - cameraY) * 0.15; // só atualiza pra cima
-        }
-
-        if (-player.y > highestY) {
-          highestY = -player.y;
-          score = Math.max(0, Math.floor(highestY / 10));
-          document.getElementById('scoreValue').textContent = score;
-        }
-
-        // ═══════════════════════════════════════════════════════════
-        // 💀 MORTE POR QUEDA
-        // ───────────────────────────────────────────────────────────
-        // Se o player cair mais que FALL_LIMIT pixels abaixo do ponto
-        // mais alto que já alcançou, ele morre. Isso resolve o caso de
-        // cair num buraco entre plataformas sem sair da tela.
-        // ═══════════════════════════════════════════════════════════
-        const FALL_LIMIT = 500;                  // distância máxima de queda
-        if (-player.y < highestY - FALL_LIMIT) { // caiu longe demais
-          endGame();
-          return;
-        }
-        if (player.y - cameraY > H + 100) {      // ou saiu da tela por baixo
-          endGame();
-          return;
-        }
-
-        platforms.forEach(p => {
-          if (p.type === 'moving') {
-            p.x += p.dir * 1.5;
-            if (p.x < p.startX - p.range || p.x > p.startX + p.range) p.dir *= -1;
-          }
-        });
-
-        platforms.forEach(p => {
-          const collidesX = player.x < p.x + p.width && player.x + player.width > p.x;
-          const fellOn = player.y + player.height >= p.y &&
-            player.y + player.height <= p.y + p.height + 8 &&
-            player.velocityY >= 0;
-          if (collidesX && fellOn) {
-            player.y = p.y - player.height;
-            player.velocityY = -player.jumpPower * (p.type === 'spring' ? 1.6 : 1);
-            player.isJumping = false;
-            if (p.type === 'spring') {
-              for (let k = 0; k < 6; k++) {
-                addParticle(player.x + player.width / 2, p.y, {
-                  vx: rand(-3, 3), vy: rand(-4, -1),
-                  life: 25, size: 2, color: PAL.spring, gravity: 0.2
-                });
-              }
-            } else {
-              for (let k = 0; k < 3; k++) {
-                addParticle(player.x + player.width / 2 + rand(-6, 6), p.y, {
-                  vx: rand(-1, 1), vy: rand(-1, 0),
-                  life: 12, size: 2, color: PAL.stoneDark, gravity: 0.2
-                });
-              }
-            }
-          }
-        });
-
-        if (player.invulnTimer === 0) {
-          for (let s of spikes) {
-            if (player.x < s.x + s.width && player.x + player.width > s.x &&
-              player.y < s.y + s.height && player.y + player.height > s.y) {
-              endGame();
-              return;
-            }
-          }
-        }
-
-        coins.forEach(c => {
-          if (c.collected) return;
-          const dx = (player.x + player.width / 2) - c.x;
-          const dy = (player.y + player.height / 2) - c.y;
-          if (dx * dx + dy * dy < 200) {
-            c.collected = true;
-            coinsCollected++;
-            score += 25;
-            document.getElementById('scoreValue').textContent = score;
-            for (let k = 0; k < 10; k++) {
-              addParticle(c.x, c.y, {
-                vx: rand(-2, 2), vy: rand(-3, -0.5),
-                life: 30, size: 2, color: PAL.gold, gravity: 0.15
-              });
-            }
-          }
-        });
-
-        const topPlatform = platforms.reduce((a, b) => a.y < b.y ? a : b);
-        if (topPlatform.y > cameraY - H) {
-          let yCursor = topPlatform.y - rand(70, 95);
-          for (let i = 0; i < 6; i++) {
-            const w = rand(50, 85);
-            const x = clamp(rand(70, W - 70 - w), 70, W - 70 - w);
-            const difficulty = Math.min(1, score / 800);
-            const r = Math.random();
-            let type = 'normal';
-            if (r < 0.12) type = 'spring';
-            else if (r < 0.25 + difficulty * 0.15) type = 'moving';
-
-            const plat = { x, y: yCursor, width: w, height: 14, type };
-            if (type === 'moving') {
-              plat.dir = Math.random() < 0.5 ? -1 : 1;
-              plat.range = rand(40, 90 + difficulty * 40);
-              plat.startX = x;
-            }
-            platforms.push(plat);
-
-            if (Math.random() < 0.3 + difficulty * 0.3) {
-              const sx = clamp(rand(70, W - 90), 70, W - 90);
-              spikes.push({ x: sx, y: yCursor - 18, width: 20, height: 18 });
-            }
-            if (Math.random() < 0.5) {
-              coins.push({ x: x + w / 2, y: yCursor - 30, collected: false });
-            }
-            yCursor -= rand(70, 95);
-          }
-        }
-
-        const topTorch = torches.length ? Math.min(...torches.map(t => t.y)) : cameraY;
-        if (topTorch > cameraY - H) {
-          for (let ty = topTorch - 160; ty > cameraY - H * 2; ty -= 160) {
-            const side = Math.random() < 0.5 ? 'left' : 'right';
-            torches.push({ x: side === 'left' ? 35 : W - 35, y: ty });
-          }
-        }
-
-        platforms = platforms.filter(p => p.y < cameraY + H + 200);
-        spikes = spikes.filter(s => s.y < cameraY + H + 200);
-        coins = coins.filter(c => !c.collected && c.y < cameraY + H + 200);
-        torches = torches.filter(t => t.y < cameraY + H + 200 && t.y > cameraY - H * 2);
-
-        for (let i = particles.length - 1; i >= 0; i--) {
-          const p = particles[i];
-          p.x += p.vx; p.y += p.vy;
-          p.vy += p.gravity;
-          p.life--;
-          if (p.life <= 0) particles.splice(i, 1);
-        }
-      }
-
-      function draw() {
-        drawTowerWalls(cameraY);
-
-        ctx.save();
-        ctx.translate(0, -cameraY);
-
-        torches.forEach(t => drawTorchFlame(t.x, t.y, frameCount));
-        platforms.forEach(p => drawPlatform(p, frameCount));
-        coins.forEach(c => { if (!c.collected) drawCoin(c, frameCount); });
-        spikes.forEach(s => drawSpike(s, frameCount));
-
-        particles.forEach(p => {
-          const a = p.life / p.maxLife;
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = a;
-          const sz = p.shrink ? Math.max(1, p.size * a) : p.size;
-          ctx.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
-        });
-        ctx.globalAlpha = 1;
-
-        if (player.invulnTimer % 4 < 2) drawHero(player, frameCount);
-
-        ctx.restore();
-
-        const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.8);
-        vignette.addColorStop(0, 'rgba(0,0,0,0)');
-        vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
-        ctx.fillStyle = vignette;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-        for (let y = 0; y < H; y += 3) {
-          ctx.fillRect(0, y, W, 1);
-        }
-      }
-
-      // ═══════════════════════════════════════════════════════════
-      // 🌐 API DE SCORES — endereço do backend
-      // ───────────────────────────────────────────────────────────
-      // Em produção, se o servidor Node estiver na mesma origem
-      // do HTML, pode deixar API_BASE = '' (caminho relativo).
-      // Se hospedar em domínios diferentes, troque pelo URL completo,
-      // ex: 'https://meu-backend.fly.dev'
-      // ═══════════════════════════════════════════════════════════
-      const API_BASE = '';
-
-      async function fetchTopScores() {
-        try {
-          const res = await fetch(`${API_BASE}/api/scores`, { cache: 'no-store' });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return await res.json();
-        } catch (err) {
-          console.error('Falha ao buscar scores:', err);
-          return null;
-        }
-      }
-
-      async function submitScore(name, score) {
-        try {
-          const res = await fetch(`${API_BASE}/api/scores`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, score })
-          });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return await res.json();
-        } catch (err) {
-          console.error('Falha ao enviar score:', err);
-          return null;
-        }
-      }
-
-      function renderTopList(scores, currentEntry) {
-        let html = '';
-        scores.forEach((t, i) => {
-          const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-          const isCurrent = currentEntry &&
-            t.date === currentEntry.date &&
-            t.name === currentEntry.name &&
-            t.score === currentEntry.score ? ' current' : '';
-          const badge = i === 0 ? '★1★' : i === 1 ? '★2★' : i === 2 ? '★3★' : `#${i + 1}`;
-          html += `<div class="top-row ${rankClass}${isCurrent}">
-        <span class="rank-badge">${badge}</span>
-        <span>${escapeHtml(t.name)}</span>
-        <span>${t.score}</span>
-      </div>`;
-        });
-        if (!scores.length) {
-          html = '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">SEM RECORDES AINDA</div>';
-        }
-        document.getElementById('top10List').innerHTML = html;
-      }
-
-      async function endGame() {
-        gameActive = false;
-        document.getElementById('finalScore').textContent = score;
-        document.getElementById('top10List').innerHTML =
-          '<div style="text-align:center;color:#aa6fce;padding:20px;font-size:11px">ENVIANDO PONTUAÇÃO...</div>';
-        document.getElementById('gameOverScreen').style.display = 'flex';
-
-        const result = await submitScore(playerName, score);
-
-        if (result && result.ok) {
-          // servidor já retorna o top atualizado
-          renderTopList(result.top || [], result.yourEntry);
-        } else {
-          // fallback: tenta buscar o top mesmo assim
-          const top = await fetchTopScores();
-          if (top) {
-            renderTopList(top, null);
-          } else {
-            document.getElementById('top10List').innerHTML =
-              '<div style="text-align:center;color:#ff4757;padding:20px;font-size:11px">⚠ SERVIDOR INDISPONÍVEL<br><br>SEU SCORE: ' + score + '</div>';
-          }
-        }
-      }
-
-      function escapeHtml(s) {
-        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-      }
-
-      function gameLoop() {
-        if (!gameActive) return;
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-      }
-
-      document.addEventListener('keydown', e => {
-        keys[e.key] = true;
-        if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && gameActive) {
-          e.preventDefault();
-          if (!player.isJumping) {
-            player.velocityY = -player.jumpPower;
-            player.isJumping = true;
-          }
-        }
-        if (e.key === 'Enter') {
-          if (document.getElementById('top10Screen').style.display === 'flex') {
-            closeTop10();
-          } else if (document.getElementById('nameScreen').style.display !== 'none') {
-            startGame();
-          } else if (document.getElementById('gameOverScreen').style.display === 'flex') {
-            location.reload();
-          }
-        }
-      });
-      document.addEventListener('keyup', e => { keys[e.key] = false; });
-
-      // ─── Controles Touch ──────────────────────────────────────
-      // Mostra os botões apenas em dispositivos com toque.
-      if (window.matchMedia('(pointer: coarse)').matches) {
-        document.getElementById('touchControls').style.display = 'block';
-      }
-
-      const btnLeft  = document.getElementById('touchLeft');
-      const btnRight = document.getElementById('touchRight');
-
-      function setTouchKey(btn, keyName, active) {
-        keys[keyName] = active;
-        btn.classList.toggle('active', active);
-      }
-
-      function addTouchBtn(btn, keyName) {
-        btn.addEventListener('touchstart', e => {
-          e.preventDefault();
-          setTouchKey(btn, keyName, true);
-        }, { passive: false });
-        btn.addEventListener('touchend', e => {
-          e.preventDefault();
-          setTouchKey(btn, keyName, false);
-        }, { passive: false });
-        btn.addEventListener('touchcancel', e => {
-          e.preventDefault();
-          setTouchKey(btn, keyName, false);
-        }, { passive: false });
-      }
-
-      addTouchBtn(btnLeft,  'ArrowLeft');
-      addTouchBtn(btnRight, 'ArrowRight');
-
-      canvas.addEventListener('touchstart', e => {
-        e.preventDefault();
-        if (gameActive && !player.isJumping) {
-          player.velocityY = -player.jumpPower;
-          player.isJumping = true;
-        }
-      }, { passive: false });
-
-      setTimeout(() => { try { document.getElementById('playerName').focus(); } catch (e) { } }, 100);
-    })();
-  </script>
+    }, 80);
+  }
+
+  function showSelected() {
+    btnPlay.style.display   = 'inline-block';
+    btnReroll.style.display = 'inline-block';
+
+    progressBar.style.display = 'block';
+    progressFill.style.transition = 'none';
+    progressFill.style.width = '0%';
+    requestAnimationFrame(() => {
+      progressFill.style.transition = 'width 3s linear';
+      progressFill.style.width = '100%';
+    });
+
+    redirectTimer = setTimeout(launchSelected, 3000);
+  }
+
+  function launchSelected() {
+    if (!selectedGame) return;
+    clearTimeout(redirectTimer);
+    window.location.href = selectedGame.path;
+  }
+
+  function renderGameList() {
+    const container = document.getElementById('gameListItems');
+    container.innerHTML = games.map(g => `
+      <div class="game-item" onclick="window.location.href='${g.path}'">
+        <span>${g.name.toUpperCase()}</span>
+        <span class="game-item-tag">${(g.tags || []).join(' · ')}</span>
+      </div>
+    `).join('');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && selectedGame) launchSelected();
+    if (e.key === ' ') { e.preventDefault(); reroll(); }
+  });
+
+  init();
+</script>
 </body>
-
 </html>
