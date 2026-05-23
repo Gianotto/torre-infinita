@@ -1,0 +1,12 @@
+[
+  {
+    "id": "torre-infinita",
+    "name": "Torre Infinita",
+    "subtitle": "PIXEL ART EDITION",
+    "description": "Escale a torre infinita sem fim. Desvie dos espinhos, colete moedas.",
+    "path": "/games/torre-infinita/",
+    "color": "#ffd700",
+    "added": "2025-01-01",
+    "tags": ["platform", "endless", "arcade"]
+  }
+]
