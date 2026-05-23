@@ -8,5 +8,15 @@
     "color": "#ffd700",
     "added": "2025-01-01",
     "tags": ["platform", "endless", "arcade"]
+  },
+  {
+    "id": "lua-runner",
+    "name": "Lua Runner",
+    "subtitle": "MOON SURFACE EDITION",
+    "description": "Corra pela superfície da lua. Desvie de crateras e OVNIs.",
+    "path": "/games/lua-runner/",
+    "color": "#aaddff",
+    "added": "2026-05-22",
+    "tags": ["runner", "endless", "arcade"]
   }
 ]

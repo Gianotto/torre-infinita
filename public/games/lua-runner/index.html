@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lua Runner — Moon Surface Edition</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      font-family: 'Courier New', monospace;
+      image-rendering: pixelated;
+      -webkit-font-smoothing: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #c0c0c0;
+    }
+    .game-wrap { display: flex; flex-direction: column; align-items: center; }
+
+    #gameContainer {
+      position: relative;
+      width: 700px;
+      max-width: 100vw;
+      background: #03060c;
+      border: 3px solid #1a2233;
+      overflow: hidden;
+      border-radius: 4px;
+      box-shadow: 0 0 30px rgba(80, 160, 255, 0.25);
+    }
+    canvas { display: block; width: 100%; height: auto; }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(3, 6, 12, 0.93);
+      z-index: 10;
+    }
+    .screen.hidden { display: none; }
+
+    h1.game-title {
+      font-size: 38px;
+      color: #aaddff;
+      letter-spacing: 8px;
+      text-shadow: 0 0 20px #4488cc;
+      margin-bottom: 4px;
+    }
+    .game-subtitle {
+      font-size: 11px;
+      color: #4466aa;
+      letter-spacing: 5px;
+      margin-bottom: 20px;
+    }
+    label.field-label {
+      font-size: 11px;
+      color: #4466aa;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+    }
+    input[type=text] {
+      background: transparent;
+      border: 2px solid #4466aa;
+      color: #aaddff;
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      padding: 8px 16px;
+      text-align: center;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      outline: none;
+      width: 200px;
+    }
+    input[type=text]:focus { border-color: #aaddff; }
+
+    .btn {
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 10px 38px;
+      background: linear-gradient(180deg, #1a3d7a 0%, #0d1f44 100%);
+      border: 2px solid #aaddff;
+      color: #aaddff;
+      cursor: pointer;
+      letter-spacing: 3px;
+      margin-top: 14px;
+      box-shadow: 0 3px 0 #061022, 0 0 14px rgba(100,180,255,0.3);
+    }
+    .btn:hover { filter: brightness(1.3); }
+    .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #061022; }
+    .btn.small {
+      font-size: 13px;
+      padding: 7px 20px;
+      background: transparent;
+      border-color: #2a3f5a;
+      color: #4466aa;
+      box-shadow: none;
+      margin-top: 8px;
+    }
+    .btn.small:hover { border-color: #6688aa; color: #88aacc; }
+
+    .top-table { width: 340px; margin-top: 8px; }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid #1a2233;
+      letter-spacing: 1px;
+    }
+    .top-row.highlight {
+      background: rgba(100, 180, 255, 0.12);
+      color: #aaddff;
+    }
+
+    #touchControls {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .touch-btn {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      background: rgba(100, 160, 255, 0.14);
+      border: 2px solid rgba(170, 210, 255, 0.28);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      color: rgba(170, 210, 255, 0.45);
+      pointer-events: all;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .touch-btn.active {
+      background: rgba(100, 160, 255, 0.4);
+      border-color: rgba(170, 210, 255, 0.8);
+      color: rgba(200, 230, 255, 0.9);
+    }
+    #touchJump { bottom: 14px; right: 14px; }
+    #touchDuck { bottom: 14px; right: 98px; }
+
+    .controls-hint {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #1e2e44;
+      letter-spacing: 3px;
+    }
+    .footer-tag {
+      margin-top: 8px;
+      font-size: 9px;
+      color: #0d1a2a;
+      letter-spacing: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <div id="gameContainer">
+
+      <!-- Name screen (shown at start) -->
+      <div id="nameScreen" class="screen">
+        <h1 class="game-title">LUA RUNNER</h1>
+        <div class="game-subtitle">∙ MOON SURFACE EDITION ∙</div>
+        <label class="field-label">INSIRA SEU NOME</label>
+        <input type="text" id="playerName" placeholder="HERÓI" maxlength="12" autocomplete="off">
+        <button class="btn" onclick="startGame()">JOGAR</button>
+        <button class="btn small" onclick="showTop10Screen()">TOP 10</button>
+        <button class="btn small" onclick="window.location.href='/'">← HUB</button>
+        <div class="controls-hint">ESPAÇO PULAR ∙ CTRL AGACHAR</div>
+      </div>
+
+      <!-- Game Over screen -->
+      <div id="gameOverScreen" class="screen hidden">
+        <h2 style="color:#ff4466;font-size:28px;letter-spacing:4px;margin-bottom:4px">GAME OVER</h2>
+        <div id="finalScore" style="font-size:22px;color:#aaddff;margin:10px 0;letter-spacing:2px"></div>
+        <div id="topListArea" class="top-table"></div>
+        <button class="btn" onclick="restartGame()">JOGAR DE NOVO</button>
+        <button class="btn small" onclick="window.location.href='/'">← HUB</button>
+      </div>
+
+      <!-- TOP 10 screen -->
+      <div id="top10Screen" class="screen hidden">
+        <h2 style="color:#aaddff;font-size:24px;letter-spacing:4px;margin-bottom:10px">TOP 10</h2>
+        <div id="top10List" class="top-table"></div>
+        <button class="btn small" onclick="hideTop10Screen()" style="margin-top:16px">← VOLTAR</button>
+      </div>
+
+      <!-- Game canvas + touch buttons -->
+      <div id="gameScreen">
+        <canvas id="gameCanvas" width="700" height="250"></canvas>
+        <div id="touchControls">
+          <div class="touch-btn" id="touchJump">↑</div>
+          <div class="touch-btn" id="touchDuck">↓</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-tag">∙ RANDOM GAMES PLATFORM ∙</div>
+  </div>
+
+  <script>
+    'use strict';
+    (() => {
+      // ── Constants ──────────────────────────────────────────────
+      const GAME_ID  = 'lua-runner';
+      const API_BASE = '../..';
+
+      // ── Canvas ─────────────────────────────────────────────────
+      const canvas = document.getElementById('gameCanvas');
+      const ctx    = canvas.getContext('2d');
+
+      // ── State ──────────────────────────────────────────────────
+      let state = 'name'; // 'name' | 'playing' | 'dying' | 'gameover' | 'top10'
+      let playerName = 'HERÓI';
+
+      // ── API ────────────────────────────────────────────────────
+      async function fetchTopScores() {
+        try {
+          const r = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, { cache: 'no-store' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return await r.json();
+        } catch { return null; }
+      }
+
+      async function submitScore(name, score) {
+        try {
+          await fetch(`${API_BASE}/api/scores/${GAME_ID}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, score })
+          });
+        } catch { /* ignore */ }
+      }
+
+      function renderTopList(list, myScore) {
+        if (!list || !list.length) {
+          return '<div style="color:#2a3f5a;padding:10px;text-align:center">Sem scores ainda</div>';
+        }
+        return list.map((e, i) => {
+          const mine = myScore !== null && e.score === myScore && e.name === playerName;
+          return `<div class="top-row${mine ? ' highlight' : ''}">
+            <span>${i + 1}. ${e.name}</span>
+            <span>${e.score}</span>
+          </div>`;
+        }).join('');
+      }
+
+      // ── Screen helpers ─────────────────────────────────────────
+      function hideAllScreens() {
+        ['nameScreen', 'gameOverScreen', 'top10Screen'].forEach(id =>
+          document.getElementById(id).classList.add('hidden'));
+      }
+
+      async function showTop10Screen() {
+        document.getElementById('nameScreen').classList.add('hidden');
+        document.getElementById('top10Screen').classList.remove('hidden');
+        state = 'top10';
+        const top = await fetchTopScores();
+        document.getElementById('top10List').innerHTML = renderTopList(top, null);
+      }
+
+      function hideTop10Screen() {
+        document.getElementById('top10Screen').classList.add('hidden');
+        document.getElementById('nameScreen').classList.remove('hidden');
+        state = 'name';
+      }
+
+      function startGame() {
+        playerName = (document.getElementById('playerName').value.trim().toUpperCase() || 'HERÓI').slice(0, 12);
+        hideAllScreens();
+        if (window.matchMedia('(pointer: coarse)').matches) {
+          document.getElementById('touchControls').style.display = 'block';
+        }
+        resetGame();
+        state = 'playing';
+        requestAnimationFrame(loop);
+      }
+
+      function restartGame() {
+        hideAllScreens();
+        resetGame();
+        state = 'playing';
+        requestAnimationFrame(loop);
+      }
+
+      async function triggerGameOver() {
+        state = 'gameover';
+        await submitScore(playerName, score);
+        const top = await fetchTopScores();
+        document.getElementById('finalScore').textContent = `SCORE: ${score}`;
+        document.getElementById('topListArea').innerHTML = renderTopList(top, score);
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+      }
+
+      // ── Keyboard ───────────────────────────────────────────────
+      const keys = {};
+      document.addEventListener('keydown', e => {
+        if (e.key === ' ') e.preventDefault();
+        keys[e.key] = true;
+        if (state === 'name'     && e.key === 'Enter') startGame();
+        if (state === 'gameover' && e.key === 'Enter') restartGame();
+      });
+      document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+      // ── Touch controls ─────────────────────────────────────────
+      function addTouchBtn(btn, keyName) {
+        btn.addEventListener('touchstart', e => {
+          e.preventDefault();
+          keys[keyName] = true;
+          btn.classList.add('active');
+        }, { passive: false });
+        ['touchend', 'touchcancel'].forEach(ev =>
+          btn.addEventListener(ev, e => {
+            e.preventDefault();
+            keys[keyName] = false;
+            btn.classList.remove('active');
+          }, { passive: false })
+        );
+      }
+      addTouchBtn(document.getElementById('touchJump'), 'jump');
+      addTouchBtn(document.getElementById('touchDuck'), 'duck');
+
+      // ── Placeholders filled by later tasks ─────────────────────
+      let score = 0;
+      function resetGame() { score = 0; }
+      function loop() { /* filled in Task 2 */ }
+
+      // Auto-focus name input
+      setTimeout(() => { try { document.getElementById('playerName').focus(); } catch {} }, 80);
+
+    })(); // end IIFE
+  </script>
+</body>
+</html>
