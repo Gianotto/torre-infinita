@@ -335,6 +335,12 @@
       function resetGame() { score = 0; }
       function loop() { /* filled in Task 2 */ }
 
+      // Expose to global scope so onclick attributes can reach them
+      window.startGame       = startGame;
+      window.showTop10Screen = showTop10Screen;
+      window.restartGame     = restartGame;
+      window.hideTop10Screen = hideTop10Screen;
+
       // Auto-focus name input
       setTimeout(() => { try { document.getElementById('playerName').focus(); } catch {} }, 80);
 
