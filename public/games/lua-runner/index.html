@@ -330,10 +330,405 @@
       addTouchBtn(document.getElementById('touchJump'), 'jump');
       addTouchBtn(document.getElementById('touchDuck'), 'duck');
 
-      // ── Placeholders filled by later tasks ─────────────────────
-      let score = 0;
-      function resetGame() { score = 0; }
-      function loop() { /* filled in Task 2 */ }
+      // ── Game constants ─────────────────────────────────────────
+      const W = 700, H = 250;
+      const GROUND_Y   = 195;   // y of ground top-edge
+      const GRAVITY    = 0.6;
+      const JUMP_VY    = -13;
+      const INIT_SPEED = 5;
+      const MAX_SPEED  = 14;
+      const STAND_W = 24, STAND_H = 48;
+      const CROUCH_W = 30, CROUCH_H = 26;
+      const HIT_MARGIN = 4;
+
+      // ── Runtime state ──────────────────────────────────────────
+      let score       = 0;
+      let worldX      = 0;
+      let speed       = INIT_SPEED;
+      let frame       = 0;
+      let rafId       = null;
+      let dying       = false;
+      let deathFlash  = 0;
+      let obstacles   = [];
+      let nextObsX    = 500;
+      let groundOff   = 0;
+      let hillOff     = 0;
+
+      // ── Stars (generated once, static) ─────────────────────────
+      const stars = Array.from({ length: 90 }, () => ({
+        x:     Math.random() * W,
+        y:     Math.random() * (GROUND_Y - 30),
+        s:     Math.random() < 0.25 ? 2 : 1,
+        phase: Math.random() * Math.PI * 2,
+      }));
+
+      // ── Player ─────────────────────────────────────────────────
+      const player = {
+        x: 80,
+        y: GROUND_Y - STAND_H,
+        w: STAND_W,
+        h: STAND_H,
+        vy: 0,
+        onGround: true,
+        crouching: false,
+      };
+
+      // ── Reset ──────────────────────────────────────────────────
+      function resetGame() {
+        score = 0; worldX = 0; speed = INIT_SPEED; frame = 0;
+        dying = false; deathFlash = 0;
+        obstacles = []; nextObsX = 500;
+        groundOff = 0; hillOff = 0;
+        player.x = 80;
+        player.y = GROUND_Y - STAND_H;
+        player.w = STAND_W; player.h = STAND_H;
+        player.vy = 0; player.onGround = true; player.crouching = false;
+      }
+
+      // ── Main loop ──────────────────────────────────────────────
+      function loop() {
+        if (state !== 'playing' && state !== 'dying') return;
+        if (!dying) update();
+        else deathFlash = Math.max(0, deathFlash - 1);
+        render();
+        rafId = requestAnimationFrame(loop);
+      }
+
+      // ── Update ─────────────────────────────────────────────────
+      function update() {
+        frame++;
+        worldX += speed;
+        score = Math.floor(worldX / 6);
+
+        speed = Math.min(MAX_SPEED, INIT_SPEED + Math.floor(score / 800) * 0.5);
+
+        const wantCrouch = keys['Control'] || keys['ArrowDown'] || keys['duck'];
+        if (wantCrouch && player.onGround) {
+          if (!player.crouching) {
+            player.crouching = true;
+            player.w = CROUCH_W; player.h = CROUCH_H;
+            player.y = GROUND_Y - CROUCH_H;
+          }
+        } else if (!wantCrouch && player.crouching) {
+          player.crouching = false;
+          player.w = STAND_W; player.h = STAND_H;
+          if (player.onGround) player.y = GROUND_Y - STAND_H;
+        }
+
+        const wantJump = keys[' '] || keys['ArrowUp'] || keys['jump'];
+        if (wantJump && player.onGround && !player.crouching) {
+          player.vy = JUMP_VY;
+          player.onGround = false;
+        }
+
+        if (!player.onGround) {
+          player.vy += GRAVITY;
+          player.y  += player.vy;
+          const groundTop = GROUND_Y - player.h;
+          if (player.y >= groundTop) {
+            player.y = groundTop;
+            player.vy = 0;
+            player.onGround = true;
+          }
+        }
+
+        if (worldX >= nextObsX) {
+          spawnObstacle();
+          const gap = 350 + Math.random() * 300 - (speed - INIT_SPEED) * 15;
+          nextObsX = worldX + Math.max(200, gap);
+        }
+
+        for (const o of obstacles) o.sx -= speed;
+        obstacles = obstacles.filter(o => o.sx > -120);
+
+        for (const o of obstacles) {
+          if (collides(player, o)) {
+            dying = true;
+            deathFlash = 30;
+            state = 'dying';
+            setTimeout(triggerGameOver, 700);
+            return;
+          }
+        }
+
+        groundOff = (groundOff + speed) % 40;
+        hillOff   = (hillOff   + speed * 0.25) % (W + 120);
+      }
+
+      function collides(p, o) {
+        const m = HIT_MARGIN;
+        return (
+          p.x + m       < o.sx + o.w - m &&
+          p.x + p.w - m > o.sx + m       &&
+          p.y + m       < o.y  + o.h - m &&
+          p.y + p.h - m > o.y  + m
+        );
+      }
+
+      function spawnObstacle() {
+        const r = Math.random();
+        const sx = W + 20;
+        if (r < 0.50) {
+          const w = 30 + Math.floor(Math.random() * 26);
+          obstacles.push({ type: 'crater', sx, y: GROUND_Y - 18, w, h: 18 });
+        } else if (r < 0.75) {
+          obstacles.push({ type: 'ufo', sx, y: 165, w: 44, h: 20 });
+        } else {
+          obstacles.push({ type: 'ufo', sx, y: 145, w: 44, h: 20 });
+        }
+      }
+
+      // ── Render ─────────────────────────────────────────────────
+      function render() {
+        ctx.fillStyle = '#03060c';
+        ctx.fillRect(0, 0, W, H);
+
+        if (deathFlash > 0) {
+          ctx.fillStyle = `rgba(255, 60, 60, ${(deathFlash / 30) * 0.45})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        drawStars();
+        drawEarth();
+        drawHills();
+        drawGround();
+
+        for (const o of obstacles) {
+          if (o.sx > -80 && o.sx < W + 80) {
+            if (o.type === 'crater') drawCrater(o.sx, o.y, o.w, o.h);
+            else                     drawUFO(o.sx, o.y);
+          }
+        }
+
+        if (!dying) drawPlayer();
+        drawHUD();
+      }
+
+      // ── Background ─────────────────────────────────────────────
+      function drawStars() {
+        for (const s of stars) {
+          const brightness = 0.5 + 0.5 * Math.sin(frame * 0.025 + s.phase);
+          ctx.fillStyle = `rgba(255,255,255,${0.35 + brightness * 0.65})`;
+          ctx.fillRect(s.x, s.y, s.s, s.s);
+        }
+      }
+
+      function drawEarth() {
+        const ex = 620, ey = 35, er = 28;
+        ctx.fillStyle = 'rgba(60,100,200,0.12)';
+        for (let r = er + 10; r > er; r -= 2) {
+          ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = '#1a3fcc';
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1e6620';
+        ctx.fillRect(ex - 8, ey - 12, 16, 14);
+        ctx.fillRect(ex + 7, ey + 4,  12,  8);
+        ctx.fillRect(ex - 20, ey + 2, 10,  7);
+        ctx.strokeStyle = 'rgba(120,180,255,0.35)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(ex, ey, er + 2, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(200,225,255,0.22)';
+        ctx.beginPath(); ctx.arc(ex - 7, ey - 9, 9, 0, Math.PI * 2); ctx.fill();
+      }
+
+      function drawHills() {
+        ctx.fillStyle = '#0a1414';
+        for (let pass = 0; pass < 2; pass++) {
+          const baseOff = pass * 180;
+          for (let i = -1; i < 4; i++) {
+            const hx = ((i * 240 + baseOff - hillOff * (0.3 + pass * 0.1)) % (W + 240)) - 60;
+            ctx.fillRect(hx,      155, 80, 40);
+            ctx.fillRect(hx + 20, 143, 50, 52);
+            ctx.fillRect(hx + 50, 160, 90, 35);
+          }
+        }
+      }
+
+      function drawGround() {
+        ctx.fillStyle = '#b5b0a8';
+        ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+        ctx.fillStyle = '#7a756e';
+        ctx.fillRect(0, GROUND_Y, W, 3);
+        ctx.fillStyle = '#cdc8be';
+        ctx.fillRect(0, GROUND_Y + 3, W, 1);
+        ctx.fillStyle = '#8e8880';
+        for (let i = 0; i < 20; i++) {
+          const rx = ((i * 37 - groundOff * 0.85) % (W + 15)) - 5;
+          ctx.fillRect(rx,      GROUND_Y + 6,  3, 2);
+          ctx.fillRect(rx + 16, GROUND_Y + 12, 2, 2);
+          ctx.fillRect(rx + 28, GROUND_Y + 8,  2, 1);
+        }
+      }
+
+      // ── Obstacles ──────────────────────────────────────────────
+      function drawCrater(x, y, w, h) {
+        ctx.fillStyle = '#6e6860';
+        ctx.fillRect(x + w - 5, y + 4, 5, h - 4);
+        ctx.fillStyle = '#9a9490';
+        ctx.fillRect(x, y + 4, w - 5, h - 4);
+        ctx.fillStyle = '#b5b0a8';
+        ctx.fillRect(x,                        y,     Math.floor(w * 0.35), 8);
+        ctx.fillRect(x + Math.floor(w * 0.65), y,     Math.floor(w * 0.35), 8);
+        ctx.fillRect(x + Math.floor(w * 0.2),  y + 3, Math.floor(w * 0.6),  6);
+        ctx.fillStyle = '#524d4a';
+        ctx.fillRect(x + Math.floor(w * 0.25), y + 6, Math.floor(w * 0.5),  4);
+        ctx.fillStyle = '#d0cac0';
+        ctx.fillRect(x, y + 4, 2, h - 6);
+      }
+
+      function drawUFO(x, y) {
+        const w = 44;
+        const cx = Math.floor(x + w / 2);
+        const bAlpha = 0.1 + 0.08 * Math.sin(frame * 0.12);
+        ctx.fillStyle = `rgba(80,255,120,${bAlpha})`;
+        for (let i = 0; i < 28; i++) {
+          const bw = 8 + i * 0.9;
+          ctx.fillRect(cx - Math.floor(bw / 2), y + 20 + i, Math.ceil(bw), 1);
+        }
+        ctx.fillStyle = '#aaccff';
+        ctx.fillRect(cx - 7, y,     14, 9);
+        ctx.fillStyle = '#88aaee';
+        ctx.fillRect(cx - 5, y + 1, 10, 6);
+        ctx.fillStyle = '#cce8ff';
+        ctx.fillRect(cx - 4, y + 1,  3, 2);
+        ctx.fillStyle = '#909090';
+        ctx.fillRect(x,     y + 9, w,     8);
+        ctx.fillStyle = '#707070';
+        ctx.fillRect(x + 4, y + 11, w - 8, 5);
+        ctx.fillStyle = '#b0b0b0';
+        ctx.fillRect(x,     y + 9, w,     2);
+        const litIdx = Math.floor(frame * 0.08) % 3;
+        const lx = [x + 7, cx - 2, x + w - 15];
+        const lc = ['#ff4444', '#44ff44', '#aa44ff'];
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = i === litIdx ? lc[i] : '#2a2a2a';
+          ctx.fillRect(lx[i], y + 12, 4, 4);
+        }
+      }
+
+      // ── Player drawing ─────────────────────────────────────────
+      function drawPlayer() {
+        const x = Math.round(player.x);
+        const y = Math.round(player.y);
+        const wf = Math.floor(frame / 6) % 4;
+        if (player.crouching)        drawAstroCrouch(x, y);
+        else if (!player.onGround)   drawAstroJump(x, y);
+        else                         drawAstroRun(x, y, wf);
+      }
+
+      function drawAstroRun(x, y, f) {
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(x + 4, y,      16, 15);
+        ctx.fillStyle = '#334455';
+        ctx.fillRect(x + 7, y + 3,  10,  8);
+        ctx.fillStyle = '#99bbdd';
+        ctx.fillRect(x + 8, y + 4,   4,  3);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 3, y + 12, 18,  2);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 3, y + 14, 18, 14);
+        ctx.fillStyle = '#dd2233';
+        ctx.fillRect(x + 5, y + 16,  5,  4);
+        ctx.fillStyle = '#2244aa';
+        ctx.fillRect(x + 5, y + 20,  5,  2);
+        ctx.fillStyle = '#cccccc';
+        ctx.fillRect(x + 16, y + 14, 5, 10);
+        ctx.fillStyle = '#e0e0e0';
+        if (f < 2) {
+          ctx.fillRect(x,      y + 15,  4,  9);
+          ctx.fillRect(x + 20, y + 17,  4,  7);
+        } else {
+          ctx.fillRect(x,      y + 17,  4,  7);
+          ctx.fillRect(x + 20, y + 15,  4,  9);
+        }
+        ctx.fillStyle = '#d0d0d0';
+        if (f === 0 || f === 1) {
+          ctx.fillRect(x + 4,  y + 28,  7, 10);
+          ctx.fillRect(x + 13, y + 30,  7,  7);
+        } else {
+          ctx.fillRect(x + 4,  y + 30,  7,  7);
+          ctx.fillRect(x + 13, y + 28,  7, 10);
+        }
+        ctx.fillStyle = '#909090';
+        if (f === 0 || f === 1) {
+          ctx.fillRect(x + 3,  y + 37,  9,  5);
+          ctx.fillRect(x + 12, y + 36,  9,  4);
+        } else {
+          ctx.fillRect(x + 3,  y + 36,  9,  4);
+          ctx.fillRect(x + 12, y + 37,  9,  5);
+        }
+      }
+
+      function drawAstroJump(x, y) {
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(x + 4, y,      16, 15);
+        ctx.fillStyle = '#334455';
+        ctx.fillRect(x + 7, y + 3,  10,  8);
+        ctx.fillStyle = '#99bbdd';
+        ctx.fillRect(x + 8, y + 4,   4,  3);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 3, y + 12, 18,  2);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 3, y + 14, 18, 14);
+        ctx.fillStyle = '#dd2233';
+        ctx.fillRect(x + 5, y + 16,  5,  4);
+        ctx.fillStyle = '#2244aa';
+        ctx.fillRect(x + 5, y + 20,  5,  2);
+        ctx.fillStyle = '#cccccc';
+        ctx.fillRect(x + 16, y + 14, 5, 10);
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(x - 2, y + 12,  5,  9);
+        ctx.fillRect(x + 21, y + 12, 5,  9);
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(x + 3,  y + 28,  8,  8);
+        ctx.fillRect(x + 13, y + 28,  8,  8);
+        ctx.fillStyle = '#909090';
+        ctx.fillRect(x + 2,  y + 35,  9,  5);
+        ctx.fillRect(x + 13, y + 35,  9,  5);
+      }
+
+      function drawAstroCrouch(x, y) {
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(x + 5, y,      16, 14);
+        ctx.fillStyle = '#334455';
+        ctx.fillRect(x + 8, y + 3,  10,  7);
+        ctx.fillStyle = '#99bbdd';
+        ctx.fillRect(x + 9, y + 4,   4,  3);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 4, y + 11, 18,  2);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + 2, y + 13, 22,  8);
+        ctx.fillStyle = '#dd2233';
+        ctx.fillRect(x + 6, y + 14,  5,  3);
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(x - 2, y + 13,  5,  6);
+        ctx.fillRect(x + 23, y + 13, 5,  6);
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(x + 3,  y + 21, 10,  5);
+        ctx.fillRect(x + 15, y + 21, 10,  5);
+        ctx.fillStyle = '#909090';
+        ctx.fillRect(x + 1,  y + 22, 12,  4);
+        ctx.fillRect(x + 14, y + 22, 12,  4);
+      }
+
+      // ── HUD ────────────────────────────────────────────────────
+      function drawHUD() {
+        ctx.fillStyle = '#4466aa';
+        ctx.font = '13px monospace';
+        ctx.fillText('SCORE', 10, 20);
+        ctx.fillStyle = '#aaddff';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(String(score).padStart(6, '0'), 66, 20);
+        const bars = Math.round((speed - INIT_SPEED) / (MAX_SPEED - INIT_SPEED) * 9);
+        ctx.fillStyle = '#0d1a2a';
+        ctx.fillRect(W - 100, 6, 90, 10);
+        ctx.fillStyle = '#1a3a6a';
+        ctx.fillRect(W - 100, 6, bars * 10, 10);
+        ctx.fillStyle = '#2a4a6a';
+        ctx.font = '8px monospace';
+        ctx.fillText('SPD', W - 100, 5);
+      }
 
       // Expose to global scope so onclick attributes can reach them
       window.startGame       = startGame;
