@@ -135,20 +135,18 @@
     .lb-entry.highlight { color: #a8d8ff; }
     .lb-entry .rank { color: #4466aa; min-width: 24px; }
     .lb-entry .score-val { color: #ffd700; }
-    #hub-btn {
-      position: absolute;
-      top: 8px; right: 8px;
+    .btn-hub {
       font-family: 'Courier New', monospace;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 2px;
-      padding: 4px 10px;
-      background: rgba(91,42,134,0.7);
+      padding: 6px 16px;
+      background: rgba(91,42,134,0.5);
       border: 1px solid #5b2a86;
       color: #aa6fce;
       cursor: pointer;
-      z-index: 20;
+      border-radius: 2px;
     }
-    #hub-btn:hover { color: #ffd700; border-color: #ffd700; }
+    .btn-hub:hover { color: #ffd700; border-color: #ffd700; }
     #mobile-btns {
       display: flex;
       justify-content: space-between;
@@ -189,8 +187,6 @@
 </head>
 <body>
 <div id="game-wrap">
-  <button id="hub-btn" onclick="window.location.href='/'">← HUB</button>
-
   <div id="game-container">
     <!-- START SCREEN -->
     <div id="screen-start" class="screen">
@@ -199,6 +195,7 @@
       <label class="field-label" for="nameInput">NOME DO JOGADOR</label>
       <input type="text" id="nameInput" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
       <button class="btn btn-primary" id="btn-start">JOGAR</button>
+      <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
       <div class="leaderboard">
         <div class="lb-title">∙ TOP 10 ∙</div>
         <div class="lb-scroll" id="lb-start-entries"></div>
@@ -211,6 +208,7 @@
       <div id="go-stats" class="gameover-stats"></div>
       <div id="go-score" class="gameover-score"></div>
       <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
+      <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
       <div class="leaderboard">
         <div class="lb-title">∙ TOP 10 ∙</div>
         <div class="lb-scroll" id="lb-go-entries"></div>
@@ -262,7 +260,9 @@ function makeState() {
     collisions: 0,
     player: { x: CW / 2, vx: 0 },
     obstacles: [],
-    nextSpawnAt: SPAWN_DIST, // scrolled value at which next obstacle spawns
+    nextSpawnAt: SPAWN_DIST,
+    snowPatches: [],
+    nextSnowAt: 30,
     invincible: false,
     invincibleUntil: 0,
     flashUntil: 0,
@@ -384,14 +384,6 @@ function drawFlag(ctx, x, y) {
 }
 
 // ── BACKGROUND ───────────────────────────────────────────────
-const SNOW_DOTS = Array.from({ length: 180 }, () => ({
-  x: Math.random() * CW,
-  y: Math.random() * GAME_H + HUD_H,
-  size: Math.random() < 0.2 ? 2 : 1,           // 20% são 2×2 px
-  alpha: 0.35 + Math.random() * 0.55,
-  tint: Math.random() < 0.3,                    // 30% com tom azulado
-}));
-
 function drawBackground(ctx) {
   const grad = ctx.createLinearGradient(0, HUD_H, 0, CH - BTN_H);
   grad.addColorStop(0, '#b0d4f8');
@@ -399,15 +391,43 @@ function drawBackground(ctx) {
   grad.addColorStop(1, '#eef6ff');
   ctx.fillStyle = grad;
   ctx.fillRect(0, HUD_H, CW, GAME_H);
+}
 
-  const offset = G.scrolled % 80;
-  SNOW_DOTS.forEach(d => {
-    const y = ((d.y - HUD_H + offset) % GAME_H) + HUD_H;
-    ctx.fillStyle = d.tint
-      ? `rgba(180,210,255,${d.alpha})`
-      : `rgba(255,255,255,${d.alpha})`;
-    ctx.fillRect(Math.floor(d.x), Math.floor(y), d.size, d.size);
-  });
+// ── SNOW PATCHES (cosmético — sobem como obstáculos) ─────────
+function spawnSnowPatch() {
+  const x = 15 + Math.random() * (CW - 30);
+  const count = 3 + Math.floor(Math.random() * 6);
+  const dots = Array.from({ length: count }, () => ({
+    dx: (Math.random() - 0.5) * 14,
+    dy: (Math.random() - 0.5) * 8,
+    size: Math.random() < 0.25 ? 2 : 1,
+    alpha: 0.45 + Math.random() * 0.45,
+    tint: Math.random() < 0.35,
+  }));
+  G.snowPatches.push({ x, y: CH - BTN_H + 8, dots });
+}
+
+function updateSnowPatches(dt) {
+  if (G.scrolled >= G.nextSnowAt) {
+    spawnSnowPatch();
+    G.nextSnowAt = G.scrolled + 45 + Math.random() * 55;
+  }
+  for (const p of G.snowPatches) p.y -= G.speed * dt;
+  G.snowPatches = G.snowPatches.filter(p => p.y > HUD_H - 10);
+}
+
+function drawSnowPatches(ctx) {
+  for (const p of G.snowPatches) {
+    for (const d of p.dots) {
+      const px = Math.floor(p.x + d.dx);
+      const py = Math.floor(p.y + d.dy);
+      if (py < HUD_H || py > CH - BTN_H) continue;
+      ctx.fillStyle = d.tint
+        ? `rgba(180,210,255,${d.alpha})`
+        : `rgba(255,255,255,${d.alpha})`;
+      ctx.fillRect(px, py, d.size, d.size);
+    }
+  }
 }
 
 function drawHUD(ctx, ts) {
@@ -458,6 +478,7 @@ function update(dt, ts) {
   G.scrolled += G.speed * dt;
   updatePlayer(dt);
   updateObstacles(dt);
+  updateSnowPatches(dt);
   checkCollisions(ts);
   if (G.invincible && ts >= G.invincibleUntil) G.invincible = false;
   updateScore();
@@ -471,6 +492,7 @@ function render(ts) {
   }
 
   drawBackground(ctx);
+  drawSnowPatches(ctx);
   drawObstacles(ctx);
 
   // Player — blink during invincibility, animação virar
@@ -561,7 +583,7 @@ const OB_SIZE = {
 
 function spawnObstacle() {
   const type   = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
-  const margin = 50;
+  const margin = 15;
   let x, attempts = 0;
   do {
     x = margin + Math.random() * (CW - margin * 2);
