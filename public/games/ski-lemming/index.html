@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ski Lemming — Downhill Edition</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
       background: #0a0612;
       font-family: 'Courier New', monospace;
       display: flex;
@@ -15,15 +22,18 @@
       min-height: 100vh;
       color: #fff;
     }
+
     #game-wrap {
       position: relative;
       width: 560px;
       max-width: 100vw;
     }
+
     #game-container {
       position: relative;
       overflow: hidden;
     }
+
     canvas {
       display: block;
       width: 100%;
@@ -32,9 +42,13 @@
       box-shadow: 0 0 30px rgba(168, 216, 255, 0.2);
       touch-action: none;
     }
+
     .screen {
       position: absolute;
-      left: 0; right: 0; top: 0; bottom: 0;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -43,7 +57,11 @@
       z-index: 10;
       gap: 10px;
     }
-    .screen.hidden { display: none; }
+
+    .screen.hidden {
+      display: none;
+    }
+
     h1.game-title {
       font-size: 38px;
       color: #a8d8ff;
@@ -51,12 +69,14 @@
       text-shadow: 0 0 20px #4488cc;
       margin-bottom: 2px;
     }
+
     .game-subtitle {
       font-size: 11px;
       color: #4466aa;
       letter-spacing: 5px;
       margin-bottom: 14px;
     }
+
     label.field-label {
       display: block;
       font-size: 11px;
@@ -64,6 +84,7 @@
       letter-spacing: 3px;
       margin-bottom: 4px;
     }
+
     input[type=text] {
       background: transparent;
       border: 2px solid #4466aa;
@@ -77,18 +98,40 @@
       outline: none;
       width: 200px;
     }
-    input[type=text]:focus { border-color: #a8d8ff; }
+
+    input[type=text]:focus {
+      border-color: #a8d8ff;
+    }
+
     input[type=text].input-error {
       animation: shake 0.3s ease;
       border-color: #ff4466;
     }
+
     @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20% {
+        transform: translateX(-6px);
+      }
+
+      40% {
+        transform: translateX(6px);
+      }
+
+      60% {
+        transform: translateX(-4px);
+      }
+
+      80% {
+        transform: translateX(4px);
+      }
     }
+
     .btn {
       font-family: 'Courier New', monospace;
       font-weight: bold;
@@ -97,16 +140,26 @@
       border-radius: 2px;
       transition: transform 0.1s, box-shadow 0.1s;
     }
+
     .btn-primary {
       font-size: 18px;
       padding: 12px 36px;
       background: linear-gradient(180deg, #3a88cc 0%, #1a4488 100%);
       border: 3px solid #a8d8ff;
       color: #a8d8ff;
-      box-shadow: 0 4px 0 #0a1a33, 0 0 20px rgba(168,216,255,0.4);
+      box-shadow: 0 4px 0 #0a1a33, 0 0 20px rgba(168, 216, 255, 0.4);
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #0a1a33, 0 0 30px rgba(168,216,255,0.6); }
-    .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #0a1a33; }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #0a1a33, 0 0 30px rgba(168, 216, 255, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #0a1a33;
+    }
+
     .btn-secondary {
       font-size: 13px;
       padding: 8px 20px;
@@ -114,8 +167,17 @@
       border: 2px solid #4466aa;
       color: #6688cc;
     }
-    .btn-secondary:hover { border-color: #a8d8ff; color: #a8d8ff; }
-    .leaderboard { width: 240px; margin-top: 6px; }
+
+    .btn-secondary:hover {
+      border-color: #a8d8ff;
+      color: #a8d8ff;
+    }
+
+    .leaderboard {
+      width: 240px;
+      margin-top: 6px;
+    }
+
     .lb-title {
       font-size: 9px;
       letter-spacing: 4px;
@@ -123,51 +185,77 @@
       margin-bottom: 6px;
       text-align: center;
     }
-    .lb-scroll { max-height: 160px; overflow-y: auto; }
+
+    .lb-scroll {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
     .lb-entry {
       display: flex;
       justify-content: space-between;
       font-size: 11px;
       color: #6688aa;
       padding: 2px 0;
-      border-bottom: 1px solid rgba(68,102,170,0.2);
+      border-bottom: 1px solid rgba(68, 102, 170, 0.2);
     }
-    .lb-entry.highlight { color: #a8d8ff; }
-    .lb-entry .rank { color: #4466aa; min-width: 24px; }
-    .lb-entry .score-val { color: #ffd700; }
+
+    .lb-entry.highlight {
+      color: #a8d8ff;
+    }
+
+    .lb-entry .rank {
+      color: #4466aa;
+      min-width: 24px;
+    }
+
+    .lb-entry .score-val {
+      color: #ffd700;
+    }
+
     .btn-hub {
       font-family: 'Courier New', monospace;
       font-size: 11px;
       letter-spacing: 2px;
       padding: 6px 16px;
-      background: rgba(91,42,134,0.5);
+      background: rgba(91, 42, 134, 0.5);
       border: 1px solid #5b2a86;
       color: #aa6fce;
       cursor: pointer;
       border-radius: 2px;
     }
-    .btn-hub:hover { color: #ffd700; border-color: #ffd700; }
+
+    .btn-hub:hover {
+      color: #ffd700;
+      border-color: #ffd700;
+    }
+
     #mobile-btns {
       display: flex;
       justify-content: space-between;
       padding: 4px 12px;
-      background: rgba(5,10,20,0.9);
+      background: rgba(5, 10, 20, 0.9);
       border: 2px solid #1a2233;
       border-top: none;
     }
+
     .mobile-btn {
       font-family: 'Courier New', monospace;
       font-size: 22px;
       font-weight: bold;
       color: #ffd700;
-      background: rgba(91,42,134,0.5);
+      background: rgba(91, 42, 134, 0.5);
       border: 2px solid #5b2a86;
       padding: 6px 28px;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
     }
-    .mobile-btn:active { background: rgba(168,216,255,0.2); }
+
+    .mobile-btn:active {
+      background: rgba(168, 216, 255, 0.2);
+    }
+
     .gameover-stats {
       font-size: 12px;
       color: #6688aa;
@@ -175,7 +263,11 @@
       text-align: center;
       line-height: 2;
     }
-    .gameover-stats strong { color: #a8d8ff; }
+
+    .gameover-stats strong {
+      color: #a8d8ff;
+    }
+
     .gameover-score {
       font-size: 28px;
       color: #ffd700;
@@ -185,603 +277,605 @@
     }
   </style>
 </head>
+
 <body>
-<div id="game-wrap">
-  <div id="game-container">
-    <!-- START SCREEN -->
-    <div id="screen-start" class="screen">
-      <h1 class="game-title">SKI LEMMING</h1>
-      <div class="game-subtitle">∙ DOWNHILL EDITION ∙</div>
-      <label class="field-label" for="nameInput">NOME DO JOGADOR</label>
-      <input type="text" id="nameInput" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
-      <button class="btn btn-primary" id="btn-start">JOGAR</button>
-      <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
-      <div class="leaderboard">
-        <div class="lb-title">∙ TOP 10 ∙</div>
-        <div class="lb-scroll" id="lb-start-entries"></div>
+  <div id="game-wrap">
+    <div id="game-container">
+      <!-- START SCREEN -->
+      <div id="screen-start" class="screen">
+        <h1 class="game-title">SKI LEMMING</h1>
+        <div class="game-subtitle">∙ DOWNHILL EDITION ∙</div>
+        <label class="field-label" for="nameInput">NOME DO JOGADOR</label>
+        <input type="text" id="nameInput" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
+        <button class="btn btn-primary" id="btn-start">JOGAR</button>
+        <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
+        <div class="leaderboard">
+          <div class="lb-title">∙ TOP 10 ∙</div>
+          <div class="lb-scroll" id="lb-start-entries"></div>
+        </div>
       </div>
+
+      <!-- GAME OVER SCREEN -->
+      <div id="screen-gameover" class="screen hidden">
+        <h1 class="game-title" style="font-size:26px; margin-bottom:0">GAME OVER</h1>
+        <div id="go-stats" class="gameover-stats"></div>
+        <div id="go-score" class="gameover-score"></div>
+        <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
+        <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
+        <div class="leaderboard">
+          <div class="lb-title">∙ TOP 10 ∙</div>
+          <div class="lb-scroll" id="lb-go-entries"></div>
+        </div>
+      </div>
+
+      <canvas id="gameCanvas" width="560" height="700"></canvas>
     </div>
 
-    <!-- GAME OVER SCREEN -->
-    <div id="screen-gameover" class="screen hidden">
-      <h1 class="game-title" style="font-size:26px; margin-bottom:0">GAME OVER</h1>
-      <div id="go-stats" class="gameover-stats"></div>
-      <div id="go-score" class="gameover-score"></div>
-      <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
-      <button class="btn-hub" onclick="window.location.href='/'">← HUB</button>
-      <div class="leaderboard">
-        <div class="lb-title">∙ TOP 10 ∙</div>
-        <div class="lb-scroll" id="lb-go-entries"></div>
-      </div>
+    <!-- MOBILE BUTTONS (hidden until touch detected) -->
+    <div id="mobile-btns" style="display:none">
+      <button class="mobile-btn" id="btn-left">◄</button>
+      <button class="mobile-btn" id="btn-right">►</button>
     </div>
-
-    <canvas id="gameCanvas" width="560" height="700"></canvas>
   </div>
 
-  <!-- MOBILE BUTTONS (hidden until touch detected) -->
-  <div id="mobile-btns" style="display:none">
-    <button class="mobile-btn" id="btn-left">◄</button>
-    <button class="mobile-btn" id="btn-right">►</button>
-  </div>
-</div>
+  <script>
+    // ── CONSTANTS ────────────────────────────────────────────────
+    const GAME_ID = 'ski-lemming';
+    const API_BASE = '../..';
+    const CW = 560;          // canvas width
+    const CH = 700;          // canvas height
+    const HUD_H = 40;           // top HUD bar height
+    const BTN_H = 40;           // bottom mobile-btn zone height
+    const GAME_H = CH - HUD_H - BTN_H; // 620 — playfield height
+    const S = 2;            // sprite pixel scale
+    const MAX_SPEED = 12;           // ← VELOCIDADE: aumente/diminua este valor (era 5)
+    const ACCEL_MS = 2000;         // ms para atingir velocidade máxima
+    const SPAWN_DIST = 80;           // px de scroll entre spawns de obstáculos
+    const HITBOX_FACTOR = 0.60;         // collision hitbox shrink factor
+    const INVINC_MS = 1500;         // invincibility after collision (ms)
+    const SHAKE_MS = 300;          // screen shake duration (ms)
+    const FLAG_SLOW_MS = 2000;         // slowdown duration (ms)
+    const FLAG_RAMP_MS = 500;          // ms to ramp back to full speed
+    const FLAG_SPEED_FACTOR = 0.4;      // speed multiplier during slowdown
+    const LIVES_MAX = 3;
+    const M_PER_PX = 0.1;          // 1 m per 10 px scrolled
+    const PLAYER_Y = HUD_H + 110;  // player fixed Y (~18% into game area = y≈150)
+    const PLAYER_SPEED_X = 5;           // horizontal speed px/frame
 
-<script>
-// ── CONSTANTS ────────────────────────────────────────────────
-const GAME_ID       = 'ski-lemming';
-const API_BASE      = '../..';
-const CW            = 560;          // canvas width
-const CH            = 700;          // canvas height
-const HUD_H         = 40;           // top HUD bar height
-const BTN_H         = 40;           // bottom mobile-btn zone height
-const GAME_H        = CH - HUD_H - BTN_H; // 620 — playfield height
-const S             = 2;            // sprite pixel scale
-const MAX_SPEED     = 8;            // ← VELOCIDADE: aumente/diminua este valor (era 5)
-const ACCEL_MS      = 2000;         // ms para atingir velocidade máxima
-const SPAWN_DIST    = 120;          // px de scroll entre spawns de obstáculos
-const HITBOX_FACTOR = 0.60;         // collision hitbox shrink factor
-const INVINC_MS     = 1500;         // invincibility after collision (ms)
-const SHAKE_MS      = 300;          // screen shake duration (ms)
-const FLAG_SLOW_MS  = 2000;         // slowdown duration (ms)
-const FLAG_RAMP_MS  = 500;          // ms to ramp back to full speed
-const FLAG_SPEED_FACTOR = 0.4;      // speed multiplier during slowdown
-const LIVES_MAX     = 3;
-const M_PER_PX      = 0.1;          // 1 m per 10 px scrolled
-const PLAYER_Y      = HUD_H + 110;  // player fixed Y (~18% into game area = y≈150)
-const PLAYER_SPEED_X = 5;           // horizontal speed px/frame
-
-// ── STATE ────────────────────────────────────────────────────
-function makeState() {
-  return {
-    phase: 'start',          // 'start' | 'playing' | 'gameover'
-    speed: 0,
-    scrolled: 0,             // total world px scrolled
-    distance: 0,             // meters (scrolled * M_PER_PX)
-    lives: LIVES_MAX,
-    collisions: 0,
-    player: { x: CW / 2, vx: 0 },
-    obstacles: [],
-    nextSpawnAt: SPAWN_DIST,
-    snowPatches: [],
-    nextSnowAt: 30,
-    invincible: false,
-    invincibleUntil: 0,
-    flashUntil: 0,
-    shakeUntil: 0,
-    flagSlowUntil: 0,
-    flagRampUntil: 0,
-    startTime: 0,
-    score: 0,
-    lastTime: 0,
-    playerName: '',
-  };
-}
-let G = makeState();
-
-// ── SPRITES ─────────────────────────────────────────────────
-
-function drawHeart(ctx, x, y, filled) {
-  ctx.fillStyle = filled ? '#ff4466' : '#442233';
-  ctx.fillRect(x+S,   y,     2*S, 2*S);
-  ctx.fillRect(x+3*S, y,     2*S, 2*S);
-  ctx.fillRect(x,     y+S,   6*S, 2*S);
-  ctx.fillRect(x+S,   y+3*S, 4*S,   S);
-  ctx.fillRect(x+2*S, y+4*S, 2*S,   S);
-}
-
-// dir: -1=virando esquerda, 0=reto, 1=virando direita
-function drawSkier(ctx, x, y, helmetCol, bodyCol, dir) {
-  dir = dir || 0;
-  const sd = dir * 3; // deslocamento dos skis/pernas ao virar
-
-  // skis — deslocam e ficam levemente assimétricos ao virar
-  ctx.fillStyle = '#777';
-  ctx.fillRect(x - 3*S + sd, y + 12*S, 14*S, S);
-  if (dir < 0) ctx.fillRect(x - 4*S, y + 13*S, 5*S, S); // tip esquerdo desce
-  if (dir > 0) ctx.fillRect(x + 7*S, y + 13*S, 5*S, S); // tip direito desce
-
-  // pernas — seguem os skis
-  ctx.fillStyle = '#1a3a6a';
-  ctx.fillRect(x + 2*S + sd, y + 9*S, 2*S, 3*S);
-  ctx.fillRect(x + 4*S + sd, y + 9*S, 2*S, 3*S);
-
-  // poles — o polo exterior estende ao virar
-  ctx.fillStyle = '#aaa';
-  ctx.fillRect(x - S,    y + 5*S, S, 7*S + (dir < 0 ? 2*S : 0));
-  ctx.fillRect(x + 8*S,  y + 5*S, S, 7*S + (dir > 0 ? 2*S : 0));
-
-  // corpo + braços — braço interno sobe levemente (lean)
-  ctx.fillStyle = bodyCol;
-  ctx.fillRect(x + S,   y + 5*S,                6*S, 5*S);
-  ctx.fillRect(x - S,   y + 5*S + (dir > 0 ? S : 0), 2*S, 3*S - (dir > 0 ? S : 0));
-  ctx.fillRect(x + 7*S, y + 5*S + (dir < 0 ? S : 0), 2*S, 3*S - (dir < 0 ? S : 0));
-
-  // pescoço + rosto (ficam centrados)
-  ctx.fillStyle = '#ffd0a0';
-  ctx.fillRect(x + 3*S, y + 3*S, 2*S, 2*S);
-  ctx.fillRect(x + 2*S, y + S,   4*S, 4*S);
-  ctx.fillRect(x + S,   y + 2*S,   S, 2*S);
-  ctx.fillRect(x + 7*S, y + 2*S,   S, 2*S);
-  // olhos
-  ctx.fillStyle = '#222';
-  ctx.fillRect(x + 3*S, y + 2*S, S, S);
-  ctx.fillRect(x + 5*S, y + 2*S, S, S);
-  // capacete
-  ctx.fillStyle = helmetCol;
-  ctx.fillRect(x + S,   y,        6*S, 2*S);
-  ctx.fillRect(x + 2*S, y - S,    4*S, 2*S);
-}
-
-function drawTree(ctx, x, y) {
-  ctx.fillStyle = '#5a3010';
-  ctx.fillRect(x + 2*S, y + 8*S, 2*S, 4*S);
-  ctx.fillStyle = '#1a6b1a';
-  ctx.fillRect(x,        y + 5*S, 6*S, 4*S);
-  ctx.fillStyle = '#228b22';
-  ctx.fillRect(x + S,    y + 2*S, 4*S, 4*S);
-  ctx.fillStyle = '#2eb52e';
-  ctx.fillRect(x + 2*S,  y,       2*S, 3*S);
-  ctx.fillStyle = 'rgba(255,255,255,0.65)';
-  ctx.fillRect(x + S,    y + 2*S,   S, S);
-  ctx.fillRect(x + 2*S,  y,         S, S);
-}
-
-function drawDog(ctx, x, y) {
-  ctx.fillStyle = '#a0742a';
-  ctx.fillRect(x + S,    y + 3*S, 7*S, 4*S);
-  ctx.fillStyle = '#c09040';
-  ctx.fillRect(x + 6*S,  y + S,   4*S, 4*S);
-  ctx.fillStyle = '#d4a855';
-  ctx.fillRect(x + 8*S,  y + 3*S, 2*S, 2*S);
-  ctx.fillStyle = '#8a5c1a';
-  ctx.fillRect(x + 6*S,  y,       2*S, 2*S);
-  ctx.fillStyle = '#7a5820';
-  ctx.fillRect(x + 2*S,  y + 7*S, 2*S, 3*S);
-  ctx.fillRect(x + 5*S,  y + 7*S, 2*S, 3*S);
-  ctx.fillStyle = '#c09040';
-  ctx.fillRect(x,         y + 2*S, 2*S, 2*S);
-  ctx.fillStyle = '#333';
-  ctx.fillRect(x + 9*S,  y + 3*S,   S, S);
-}
-
-function drawFlag(ctx, x, y) {
-  // pole
-  ctx.fillStyle = '#888';
-  ctx.fillRect(x + 2*S, y,         S,   10*S);
-  // flag
-  ctx.fillStyle = '#dd1111';
-  ctx.fillRect(x + 3*S, y,         5*S, 4*S);
-  ctx.fillStyle = '#ff4444';
-  ctx.fillRect(x + 3*S, y,         5*S,   S);
-  ctx.fillRect(x + 3*S, y,           S, 4*S);
-  ctx.fillStyle = '#aa0000';
-  ctx.fillRect(x + 7*S, y,           S, 4*S);
-  ctx.fillRect(x + 3*S, y + 3*S,   5*S,   S);
-  // snow base
-  ctx.fillStyle = '#c8e0f8';
-  ctx.fillRect(x,        y + 10*S, 6*S, 2*S);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x + S,    y + 10*S, 4*S,   S);
-}
-
-// ── BACKGROUND ───────────────────────────────────────────────
-function drawBackground(ctx) {
-  const grad = ctx.createLinearGradient(0, HUD_H, 0, CH - BTN_H);
-  grad.addColorStop(0, '#b0d4f8');
-  grad.addColorStop(0.5, '#d4ecff');
-  grad.addColorStop(1, '#eef6ff');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, HUD_H, CW, GAME_H);
-}
-
-// ── SNOW PATCHES (cosmético — sobem como obstáculos) ─────────
-function spawnSnowPatch() {
-  const x = 15 + Math.random() * (CW - 30);
-  const count = 3 + Math.floor(Math.random() * 6);
-  const dots = Array.from({ length: count }, () => ({
-    dx: (Math.random() - 0.5) * 14,
-    dy: (Math.random() - 0.5) * 8,
-    size: Math.random() < 0.25 ? 2 : 1,
-    alpha: 0.45 + Math.random() * 0.45,
-    tint: Math.random() < 0.35,
-  }));
-  G.snowPatches.push({ x, y: CH - BTN_H + 8, dots });
-}
-
-function updateSnowPatches(dt) {
-  if (G.scrolled >= G.nextSnowAt) {
-    spawnSnowPatch();
-    G.nextSnowAt = G.scrolled + 45 + Math.random() * 55;
-  }
-  for (const p of G.snowPatches) p.y -= G.speed * dt;
-  G.snowPatches = G.snowPatches.filter(p => p.y > HUD_H - 10);
-}
-
-function drawSnowPatches(ctx) {
-  for (const p of G.snowPatches) {
-    for (const d of p.dots) {
-      const px = Math.floor(p.x + d.dx);
-      const py = Math.floor(p.y + d.dy);
-      if (py < HUD_H || py > CH - BTN_H) continue;
-      ctx.fillStyle = d.tint
-        ? `rgba(180,210,255,${d.alpha})`
-        : `rgba(255,255,255,${d.alpha})`;
-      ctx.fillRect(px, py, d.size, d.size);
+    // ── STATE ────────────────────────────────────────────────────
+    function makeState() {
+      return {
+        phase: 'start',          // 'start' | 'playing' | 'gameover'
+        speed: 0,
+        scrolled: 0,             // total world px scrolled
+        distance: 0,             // meters (scrolled * M_PER_PX)
+        lives: LIVES_MAX,
+        collisions: 0,
+        player: { x: CW / 2, vx: 0 },
+        obstacles: [],
+        nextSpawnAt: SPAWN_DIST,
+        snowPatches: [],
+        nextSnowAt: 30,
+        invincible: false,
+        invincibleUntil: 0,
+        flashUntil: 0,
+        shakeUntil: 0,
+        flagSlowUntil: 0,
+        flagRampUntil: 0,
+        startTime: 0,
+        score: 0,
+        lastTime: 0,
+        playerName: '',
+      };
     }
-  }
-}
+    let G = makeState();
 
-function drawHUD(ctx, ts) {
-  ctx.fillStyle = 'rgba(5,10,20,0.88)';
-  ctx.fillRect(0, 0, CW, HUD_H);
+    // ── SPRITES ─────────────────────────────────────────────────
 
-  for (let i = 0; i < LIVES_MAX; i++) {
-    drawHeart(ctx, 8 + i * 18, 12, i < G.lives);
-  }
-
-  ctx.fillStyle = '#ffd700';
-  ctx.font = 'bold 11px Courier New';
-  ctx.fillText(`${Math.floor(G.distance)}m`, CW / 2 - 30, 25);
-
-  ctx.fillStyle = '#a8d8ff';
-  ctx.font = '10px Courier New';
-  ctx.fillText(`SCORE: ${G.score}`, CW - 110, 25);
-
-  if (ts < G.flagSlowUntil || ts < G.flagRampUntil) {
-    const remaining = Math.max(0, G.flagRampUntil - ts);
-    const ratio = remaining / (FLAG_SLOW_MS + FLAG_RAMP_MS);
-    ctx.fillStyle = '#332200';
-    ctx.fillRect(8, 34, CW - 16, 4);
-    ctx.fillStyle = '#ffdd00';
-    ctx.fillRect(8, 34, (CW - 16) * ratio, 4);
-  }
-}
-
-// ── CANVAS REFERENCE ─────────────────────────────────────────
-const canvas = document.getElementById('gameCanvas');
-const ctx    = canvas.getContext('2d');
-
-// ── GAME LOOP ────────────────────────────────────────────────
-function gameLoop(ts) {
-  requestAnimationFrame(gameLoop);
-
-  const dt = Math.min((ts - (G.lastTime || ts)) / (1000 / 60), 3);
-  G.lastTime = ts;
-
-  if (G.phase !== 'playing') return;
-
-  update(dt, ts);
-  render(ts);
-}
-
-function update(dt, ts) {
-  updateSpeed(dt, ts);
-  G.scrolled += G.speed * dt;
-  updatePlayer(dt);
-  updateObstacles(dt);
-  updateSnowPatches(dt);
-  checkCollisions(ts);
-  if (G.invincible && ts >= G.invincibleUntil) G.invincible = false;
-  updateScore();
-}
-
-function render(ts) {
-  const shake = ts < G.shakeUntil;
-  if (shake) {
-    ctx.save();
-    ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
-  }
-
-  drawBackground(ctx);
-  drawSnowPatches(ctx);
-  drawObstacles(ctx);
-
-  // Player — blink during invincibility, animação virar
-  const blink = G.invincible && Math.floor(ts / 62) % 2 === 0;
-  if (!blink) {
-    const dir = G.player.vx < -0.5 ? -1 : G.player.vx > 0.5 ? 1 : 0;
-    drawSkier(ctx, G.player.x - 4*S, PLAYER_Y, '#1a6bb5', '#dd2222', dir);
-  }
-
-  // Yellow shimmer during flag slowdown
-  if (ts < G.flagSlowUntil) {
-    ctx.save();
-    ctx.globalAlpha = 0.22;
-    ctx.fillStyle = '#ffdd00';
-    ctx.fillRect(G.player.x - 6*S, PLAYER_Y - S, 16*S, 16*S);
-    ctx.restore();
-  }
-
-  // Flash overlay
-  if (ts < G.flashUntil) {
-    const isFlagFlash = ts < G.flagSlowUntil || ts < G.flagRampUntil;
-    ctx.fillStyle = isFlagFlash ? 'rgba(255,220,0,0.25)' : 'rgba(255,30,50,0.35)';
-    ctx.fillRect(0, HUD_H, CW, GAME_H);
-  }
-
-  drawHUD(ctx, ts);
-
-  if (shake) ctx.restore();
-}
-
-function updateSpeed(dt, ts) {
-  const elapsed = ts - G.startTime;
-
-  if (ts < G.flagSlowUntil) {
-    G.speed = MAX_SPEED * FLAG_SPEED_FACTOR;
-  } else if (ts < G.flagRampUntil) {
-    const rampProgress = 1 - (G.flagRampUntil - ts) / FLAG_RAMP_MS;
-    G.speed = MAX_SPEED * FLAG_SPEED_FACTOR + MAX_SPEED * (1 - FLAG_SPEED_FACTOR) * rampProgress;
-  } else if (elapsed < ACCEL_MS) {
-    G.speed = MAX_SPEED * (elapsed / ACCEL_MS);
-  } else {
-    G.speed = MAX_SPEED;
-  }
-}
-
-function updatePlayer(dt) {
-  const accel = PLAYER_SPEED_X * 0.3;
-  if (keys.left)        G.player.vx = Math.max(G.player.vx - accel * dt, -PLAYER_SPEED_X);
-  else if (keys.right)  G.player.vx = Math.min(G.player.vx + accel * dt,  PLAYER_SPEED_X);
-  else                  G.player.vx *= Math.pow(0.8, dt);
-  G.player.x = Math.max(10*S, Math.min(CW - 10*S, G.player.x + G.player.vx * dt));
-}
-
-function updateScore() {
-  G.distance = G.scrolled * M_PER_PX;
-  G.score    = Math.floor(G.distance / Math.max(1, G.collisions));
-}
-
-// ── INPUT ────────────────────────────────────────────────────
-const keys = { left: false, right: false };
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = true;
-  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
-});
-document.addEventListener('keyup', e => {
-  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = false;
-  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
-});
-
-document.getElementById('btn-left').addEventListener('touchstart',  e => { e.preventDefault(); keys.left  = true;  }, { passive: false });
-document.getElementById('btn-left').addEventListener('touchend',    e => { e.preventDefault(); keys.left  = false; }, { passive: false });
-document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys.right = true;  }, { passive: false });
-document.getElementById('btn-right').addEventListener('touchend',   e => { e.preventDefault(); keys.right = false; }, { passive: false });
-document.getElementById('btn-left').addEventListener('mousedown',  () => keys.left  = true);
-document.getElementById('btn-right').addEventListener('mousedown', () => keys.right = true);
-document.addEventListener('mouseup', () => { keys.left = false; keys.right = false; });
-
-// ── OBSTACLES ────────────────────────────────────────────────
-const OB_TYPES = ['tree', 'tree', 'tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
-
-const OB_SIZE = {
-  tree:   { w: 6*S,  h: 12*S },
-  dog:    { w: 10*S, h: 10*S },
-  skier:  { w: 8*S,  h: 14*S },
-  flag:   { w: 8*S,  h: 12*S },
-};
-
-function spawnObstacle() {
-  const type   = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
-  const margin = 15;
-  let x, attempts = 0;
-  do {
-    x = margin + Math.random() * (CW - margin * 2);
-    attempts++;
-  } while (
-    attempts < 10 &&
-    G.obstacles.some(ob => ob.y > CH - BTN_H - 50 && Math.abs(ob.x - x) < 60)
-  );
-  G.obstacles.push({
-    type,
-    x,
-    y: CH - BTN_H + 20,
-    phase: Math.random() * Math.PI * 2,
-  });
-}
-
-function updateObstacles(dt) {
-  if (G.scrolled >= G.nextSpawnAt) {
-    spawnObstacle();
-    G.nextSpawnAt = G.scrolled + SPAWN_DIST + Math.random() * 80;
-  }
-
-  for (const ob of G.obstacles) {
-    if (ob.type === 'skier') {
-      ob.y -= G.speed * 0.6 * dt;
-    } else {
-      ob.y -= G.speed * dt;
+    function drawHeart(ctx, x, y, filled) {
+      ctx.fillStyle = filled ? '#ff4466' : '#442233';
+      ctx.fillRect(x + S, y, 2 * S, 2 * S);
+      ctx.fillRect(x + 3 * S, y, 2 * S, 2 * S);
+      ctx.fillRect(x, y + S, 6 * S, 2 * S);
+      ctx.fillRect(x + S, y + 3 * S, 4 * S, S);
+      ctx.fillRect(x + 2 * S, y + 4 * S, 2 * S, S);
     }
 
-    if (ob.type === 'dog') {
-      ob.phase += 0.03 * dt;
-      ob.x += Math.sin(ob.phase) * 1.5 * dt;
-      ob.x = Math.max(20, Math.min(CW - 20, ob.x));
+    // dir: -1=virando esquerda, 0=reto, 1=virando direita
+    function drawSkier(ctx, x, y, helmetCol, bodyCol, dir) {
+      dir = dir || 0;
+      const sd = dir * 3; // deslocamento dos skis/pernas ao virar
+
+      // skis — deslocam e ficam levemente assimétricos ao virar
+      ctx.fillStyle = '#777';
+      ctx.fillRect(x - 3 * S + sd, y + 12 * S, 14 * S, S);
+      if (dir < 0) ctx.fillRect(x - 4 * S, y + 13 * S, 5 * S, S); // tip esquerdo desce
+      if (dir > 0) ctx.fillRect(x + 7 * S, y + 13 * S, 5 * S, S); // tip direito desce
+
+      // pernas — seguem os skis
+      ctx.fillStyle = '#1a3a6a';
+      ctx.fillRect(x + 2 * S + sd, y + 9 * S, 2 * S, 3 * S);
+      ctx.fillRect(x + 4 * S + sd, y + 9 * S, 2 * S, 3 * S);
+
+      // poles — o polo exterior estende ao virar
+      ctx.fillStyle = '#aaa';
+      ctx.fillRect(x - S, y + 5 * S, S, 7 * S + (dir < 0 ? 2 * S : 0));
+      ctx.fillRect(x + 8 * S, y + 5 * S, S, 7 * S + (dir > 0 ? 2 * S : 0));
+
+      // corpo + braços — braço interno sobe levemente (lean)
+      ctx.fillStyle = bodyCol;
+      ctx.fillRect(x + S, y + 5 * S, 6 * S, 5 * S);
+      ctx.fillRect(x - S, y + 5 * S + (dir > 0 ? S : 0), 2 * S, 3 * S - (dir > 0 ? S : 0));
+      ctx.fillRect(x + 7 * S, y + 5 * S + (dir < 0 ? S : 0), 2 * S, 3 * S - (dir < 0 ? S : 0));
+
+      // pescoço + rosto (ficam centrados)
+      ctx.fillStyle = '#ffd0a0';
+      ctx.fillRect(x + 3 * S, y + 3 * S, 2 * S, 2 * S);
+      ctx.fillRect(x + 2 * S, y + S, 4 * S, 4 * S);
+      ctx.fillRect(x + S, y + 2 * S, S, 2 * S);
+      ctx.fillRect(x + 7 * S, y + 2 * S, S, 2 * S);
+      // olhos
+      ctx.fillStyle = '#222';
+      ctx.fillRect(x + 3 * S, y + 2 * S, S, S);
+      ctx.fillRect(x + 5 * S, y + 2 * S, S, S);
+      // capacete
+      ctx.fillStyle = helmetCol;
+      ctx.fillRect(x + S, y, 6 * S, 2 * S);
+      ctx.fillRect(x + 2 * S, y - S, 4 * S, 2 * S);
     }
-  }
 
-  G.obstacles = G.obstacles.filter(ob => ob.y > HUD_H - 30);
-}
-
-function drawObstacles(ctx) {
-  for (const ob of G.obstacles) {
-    if (ob.y < HUD_H - 20 || ob.y > CH - BTN_H + 10) continue;
-    const x = Math.floor(ob.x - OB_SIZE[ob.type].w / 2);
-    const y = Math.floor(ob.y - OB_SIZE[ob.type].h);
-    switch (ob.type) {
-      case 'tree':   drawTree(ctx, x, y);                         break;
-      case 'dog':    drawDog(ctx, x, y);                          break;
-      case 'skier':  drawSkier(ctx, x, y, '#aa2200', '#cc5500', 0);  break;
-      case 'flag':   drawFlag(ctx, x, y);                         break;
+    function drawTree(ctx, x, y) {
+      ctx.fillStyle = '#5a3010';
+      ctx.fillRect(x + 2 * S, y + 8 * S, 2 * S, 4 * S);
+      ctx.fillStyle = '#1a6b1a';
+      ctx.fillRect(x, y + 5 * S, 6 * S, 4 * S);
+      ctx.fillStyle = '#228b22';
+      ctx.fillRect(x + S, y + 2 * S, 4 * S, 4 * S);
+      ctx.fillStyle = '#2eb52e';
+      ctx.fillRect(x + 2 * S, y, 2 * S, 3 * S);
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.fillRect(x + S, y + 2 * S, S, S);
+      ctx.fillRect(x + 2 * S, y, S, S);
     }
-  }
-}
 
-// ── COLLISION ────────────────────────────────────────────────
-function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
-  return ax < bx + bw && ax + aw > bx &&
-         ay < by + bh && ay + ah > by;
-}
-
-function handleFlagHit(ts, ob) {
-  G.flagSlowUntil = ts + FLAG_SLOW_MS;
-  G.flagRampUntil = ts + FLAG_SLOW_MS + FLAG_RAMP_MS;
-  G.flashUntil    = ts + 200;
-  G.obstacles = G.obstacles.filter(o => o !== ob);
-}
-
-function handleObstacleHit(ts, ob) {
-  G.lives--;
-  G.collisions++;
-  G.flashUntil = ts + 400;
-  G.shakeUntil = ts + SHAKE_MS;
-  G.invincible = true;
-  G.invincibleUntil = ts + INVINC_MS;
-  G.obstacles = G.obstacles.filter(o => o !== ob);
-  if (G.lives <= 0) triggerGameOver();
-}
-
-function checkCollisions(ts) {
-  if (G.invincible && ts < G.invincibleUntil) return;
-
-  const pw = OB_SIZE['skier'].w * HITBOX_FACTOR;
-  const ph = OB_SIZE['skier'].h * HITBOX_FACTOR;
-  const px = G.player.x - pw / 2;
-  const py = PLAYER_Y + (OB_SIZE['skier'].h - ph) / 2;
-
-  for (const ob of G.obstacles) {
-    const ow = OB_SIZE[ob.type].w * HITBOX_FACTOR;
-    const oh = OB_SIZE[ob.type].h * HITBOX_FACTOR;
-    const ox = ob.x - OB_SIZE[ob.type].w / 2 + OB_SIZE[ob.type].w * (1 - HITBOX_FACTOR) / 2;
-    const oy = ob.y - OB_SIZE[ob.type].h + OB_SIZE[ob.type].h * (1 - HITBOX_FACTOR) / 2;
-
-    if (!rectsOverlap(px, py, pw, ph, ox, oy, ow, oh)) continue;
-
-    if (ob.type === 'flag') {
-      handleFlagHit(ts, ob);
-    } else {
-      handleObstacleHit(ts, ob);
+    function drawDog(ctx, x, y) {
+      ctx.fillStyle = '#a0742a';
+      ctx.fillRect(x + S, y + 3 * S, 7 * S, 4 * S);
+      ctx.fillStyle = '#c09040';
+      ctx.fillRect(x + 6 * S, y + S, 4 * S, 4 * S);
+      ctx.fillStyle = '#d4a855';
+      ctx.fillRect(x + 8 * S, y + 3 * S, 2 * S, 2 * S);
+      ctx.fillStyle = '#8a5c1a';
+      ctx.fillRect(x + 6 * S, y, 2 * S, 2 * S);
+      ctx.fillStyle = '#7a5820';
+      ctx.fillRect(x + 2 * S, y + 7 * S, 2 * S, 3 * S);
+      ctx.fillRect(x + 5 * S, y + 7 * S, 2 * S, 3 * S);
+      ctx.fillStyle = '#c09040';
+      ctx.fillRect(x, y + 2 * S, 2 * S, 2 * S);
+      ctx.fillStyle = '#333';
+      ctx.fillRect(x + 9 * S, y + 3 * S, S, S);
     }
-    break;
-  }
-}
 
-function triggerGameOver() {
-  G.phase = 'gameover';
-  G.score = Math.floor(G.distance / Math.max(1, G.collisions));
-  showGameOver();
-}
+    function drawFlag(ctx, x, y) {
+      // pole
+      ctx.fillStyle = '#888';
+      ctx.fillRect(x + 2 * S, y, S, 10 * S);
+      // flag
+      ctx.fillStyle = '#dd1111';
+      ctx.fillRect(x + 3 * S, y, 5 * S, 4 * S);
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(x + 3 * S, y, 5 * S, S);
+      ctx.fillRect(x + 3 * S, y, S, 4 * S);
+      ctx.fillStyle = '#aa0000';
+      ctx.fillRect(x + 7 * S, y, S, 4 * S);
+      ctx.fillRect(x + 3 * S, y + 3 * S, 5 * S, S);
+      // snow base
+      ctx.fillStyle = '#c8e0f8';
+      ctx.fillRect(x, y + 10 * S, 6 * S, 2 * S);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + S, y + 10 * S, 4 * S, S);
+    }
 
-// ── API & LEADERBOARD ────────────────────────────────────────
-async function fetchScores() {
-  try {
-    const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, { cache: 'no-store' });
-    return res.ok ? res.json() : [];
-  } catch { return []; }
-}
+    // ── BACKGROUND ───────────────────────────────────────────────
+    function drawBackground(ctx) {
+      const grad = ctx.createLinearGradient(0, HUD_H, 0, CH - BTN_H);
+      grad.addColorStop(0, '#b0d4f8');
+      grad.addColorStop(0.5, '#d4ecff');
+      grad.addColorStop(1, '#eef6ff');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, HUD_H, CW, GAME_H);
+    }
 
-async function submitScore(name, score) {
-  try {
-    const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score }),
+    // ── SNOW PATCHES (cosmético — sobem como obstáculos) ─────────
+    function spawnSnowPatch() {
+      const x = 15 + Math.random() * (CW - 30);
+      const count = 3 + Math.floor(Math.random() * 6);
+      const dots = Array.from({ length: count }, () => ({
+        dx: (Math.random() - 0.5) * 14,
+        dy: (Math.random() - 0.5) * 8,
+        size: Math.random() < 0.25 ? 2 : 1,
+        alpha: 0.45 + Math.random() * 0.45,
+        tint: Math.random() < 0.35,
+      }));
+      G.snowPatches.push({ x, y: CH - BTN_H + 8, dots });
+    }
+
+    function updateSnowPatches(dt) {
+      if (G.scrolled >= G.nextSnowAt) {
+        spawnSnowPatch();
+        G.nextSnowAt = G.scrolled + 45 + Math.random() * 55;
+      }
+      for (const p of G.snowPatches) p.y -= G.speed * dt;
+      G.snowPatches = G.snowPatches.filter(p => p.y > HUD_H - 10);
+    }
+
+    function drawSnowPatches(ctx) {
+      for (const p of G.snowPatches) {
+        for (const d of p.dots) {
+          const px = Math.floor(p.x + d.dx);
+          const py = Math.floor(p.y + d.dy);
+          if (py < HUD_H || py > CH - BTN_H) continue;
+          ctx.fillStyle = d.tint
+            ? `rgba(180,210,255,${d.alpha})`
+            : `rgba(255,255,255,${d.alpha})`;
+          ctx.fillRect(px, py, d.size, d.size);
+        }
+      }
+    }
+
+    function drawHUD(ctx, ts) {
+      ctx.fillStyle = 'rgba(5,10,20,0.88)';
+      ctx.fillRect(0, 0, CW, HUD_H);
+
+      for (let i = 0; i < LIVES_MAX; i++) {
+        drawHeart(ctx, 8 + i * 18, 12, i < G.lives);
+      }
+
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 11px Courier New';
+      ctx.fillText(`${Math.floor(G.distance)}m`, CW / 2 - 30, 25);
+
+      ctx.fillStyle = '#a8d8ff';
+      ctx.font = '10px Courier New';
+      ctx.fillText(`SCORE: ${G.score}`, CW - 110, 25);
+
+      if (ts < G.flagSlowUntil || ts < G.flagRampUntil) {
+        const remaining = Math.max(0, G.flagRampUntil - ts);
+        const ratio = remaining / (FLAG_SLOW_MS + FLAG_RAMP_MS);
+        ctx.fillStyle = '#332200';
+        ctx.fillRect(8, 34, CW - 16, 4);
+        ctx.fillStyle = '#ffdd00';
+        ctx.fillRect(8, 34, (CW - 16) * ratio, 4);
+      }
+    }
+
+    // ── CANVAS REFERENCE ─────────────────────────────────────────
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ── GAME LOOP ────────────────────────────────────────────────
+    function gameLoop(ts) {
+      requestAnimationFrame(gameLoop);
+
+      const dt = Math.min((ts - (G.lastTime || ts)) / (1000 / 60), 3);
+      G.lastTime = ts;
+
+      if (G.phase !== 'playing') return;
+
+      update(dt, ts);
+      render(ts);
+    }
+
+    function update(dt, ts) {
+      updateSpeed(dt, ts);
+      G.scrolled += G.speed * dt;
+      updatePlayer(dt);
+      updateObstacles(dt);
+      updateSnowPatches(dt);
+      checkCollisions(ts);
+      if (G.invincible && ts >= G.invincibleUntil) G.invincible = false;
+      updateScore();
+    }
+
+    function render(ts) {
+      const shake = ts < G.shakeUntil;
+      if (shake) {
+        ctx.save();
+        ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+      }
+
+      drawBackground(ctx);
+      drawSnowPatches(ctx);
+      drawObstacles(ctx);
+
+      // Player — blink during invincibility, animação virar
+      const blink = G.invincible && Math.floor(ts / 62) % 2 === 0;
+      if (!blink) {
+        const dir = G.player.vx < -0.5 ? -1 : G.player.vx > 0.5 ? 1 : 0;
+        drawSkier(ctx, G.player.x - 4 * S, PLAYER_Y, '#1a6bb5', '#dd2222', dir);
+      }
+
+      // Yellow shimmer during flag slowdown
+      if (ts < G.flagSlowUntil) {
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = '#ffdd00';
+        ctx.fillRect(G.player.x - 6 * S, PLAYER_Y - S, 16 * S, 16 * S);
+        ctx.restore();
+      }
+
+      // Flash overlay
+      if (ts < G.flashUntil) {
+        const isFlagFlash = ts < G.flagSlowUntil || ts < G.flagRampUntil;
+        ctx.fillStyle = isFlagFlash ? 'rgba(255,220,0,0.25)' : 'rgba(255,30,50,0.35)';
+        ctx.fillRect(0, HUD_H, CW, GAME_H);
+      }
+
+      drawHUD(ctx, ts);
+
+      if (shake) ctx.restore();
+    }
+
+    function updateSpeed(dt, ts) {
+      const elapsed = ts - G.startTime;
+
+      if (ts < G.flagSlowUntil) {
+        G.speed = MAX_SPEED * FLAG_SPEED_FACTOR;
+      } else if (ts < G.flagRampUntil) {
+        const rampProgress = 1 - (G.flagRampUntil - ts) / FLAG_RAMP_MS;
+        G.speed = MAX_SPEED * FLAG_SPEED_FACTOR + MAX_SPEED * (1 - FLAG_SPEED_FACTOR) * rampProgress;
+      } else if (elapsed < ACCEL_MS) {
+        G.speed = MAX_SPEED * (elapsed / ACCEL_MS);
+      } else {
+        G.speed = MAX_SPEED;
+      }
+    }
+
+    function updatePlayer(dt) {
+      const accel = PLAYER_SPEED_X * 0.3;
+      if (keys.left) G.player.vx = Math.max(G.player.vx - accel * dt, -PLAYER_SPEED_X);
+      else if (keys.right) G.player.vx = Math.min(G.player.vx + accel * dt, PLAYER_SPEED_X);
+      else G.player.vx *= Math.pow(0.8, dt);
+      G.player.x = Math.max(10 * S, Math.min(CW - 10 * S, G.player.x + G.player.vx * dt));
+    }
+
+    function updateScore() {
+      G.distance = G.scrolled * M_PER_PX;
+      G.score = Math.floor(G.distance / Math.max(1, G.collisions));
+    }
+
+    // ── INPUT ────────────────────────────────────────────────────
+    const keys = { left: false, right: false };
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
     });
-    return res.ok ? res.json() : [];
-  } catch { return []; }
-}
+    document.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+    });
 
-function renderLeaderboard(containerId, entries, highlightName) {
-  const el = document.getElementById(containerId);
-  if (!entries || !entries.length) {
-    el.innerHTML = '<div class="lb-entry" style="justify-content:center;color:#4466aa">— sem scores ainda —</div>';
-    return;
-  }
-  el.innerHTML = entries.slice(0, 10).map((e, i) => `
+    document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); keys.left = true; }, { passive: false });
+    document.getElementById('btn-left').addEventListener('touchend', e => { e.preventDefault(); keys.left = false; }, { passive: false });
+    document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys.right = true; }, { passive: false });
+    document.getElementById('btn-right').addEventListener('touchend', e => { e.preventDefault(); keys.right = false; }, { passive: false });
+    document.getElementById('btn-left').addEventListener('mousedown', () => keys.left = true);
+    document.getElementById('btn-right').addEventListener('mousedown', () => keys.right = true);
+    document.addEventListener('mouseup', () => { keys.left = false; keys.right = false; });
+
+    // ── OBSTACLES ────────────────────────────────────────────────
+    const OB_TYPES = ['tree', 'tree', 'tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
+
+    const OB_SIZE = {
+      tree: { w: 6 * S, h: 12 * S },
+      dog: { w: 10 * S, h: 10 * S },
+      skier: { w: 8 * S, h: 14 * S },
+      flag: { w: 8 * S, h: 12 * S },
+    };
+
+    function spawnObstacle() {
+      const type = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
+      const margin = 15;
+      let x, attempts = 0;
+      do {
+        x = margin + Math.random() * (CW - margin * 2);
+        attempts++;
+      } while (
+        attempts < 10 &&
+        G.obstacles.some(ob => ob.y > CH - BTN_H - 50 && Math.abs(ob.x - x) < 60)
+      );
+      G.obstacles.push({
+        type,
+        x,
+        y: CH - BTN_H + 20,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    function updateObstacles(dt) {
+      if (G.scrolled >= G.nextSpawnAt) {
+        spawnObstacle();
+        G.nextSpawnAt = G.scrolled + SPAWN_DIST + Math.random() * 80;
+      }
+
+      for (const ob of G.obstacles) {
+        if (ob.type === 'skier') {
+          ob.y -= G.speed * 0.6 * dt;
+        } else {
+          ob.y -= G.speed * dt;
+        }
+
+        if (ob.type === 'dog') {
+          ob.phase += 0.03 * dt;
+          ob.x += Math.sin(ob.phase) * 1.5 * dt;
+          ob.x = Math.max(20, Math.min(CW - 20, ob.x));
+        }
+      }
+
+      G.obstacles = G.obstacles.filter(ob => ob.y > HUD_H - 30);
+    }
+
+    function drawObstacles(ctx) {
+      for (const ob of G.obstacles) {
+        if (ob.y < HUD_H - 20 || ob.y > CH - BTN_H + 10) continue;
+        const x = Math.floor(ob.x - OB_SIZE[ob.type].w / 2);
+        const y = Math.floor(ob.y - OB_SIZE[ob.type].h);
+        switch (ob.type) {
+          case 'tree': drawTree(ctx, x, y); break;
+          case 'dog': drawDog(ctx, x, y); break;
+          case 'skier': drawSkier(ctx, x, y, '#aa2200', '#cc5500', 0); break;
+          case 'flag': drawFlag(ctx, x, y); break;
+        }
+      }
+    }
+
+    // ── COLLISION ────────────────────────────────────────────────
+    function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+      return ax < bx + bw && ax + aw > bx &&
+        ay < by + bh && ay + ah > by;
+    }
+
+    function handleFlagHit(ts, ob) {
+      G.flagSlowUntil = ts + FLAG_SLOW_MS;
+      G.flagRampUntil = ts + FLAG_SLOW_MS + FLAG_RAMP_MS;
+      G.flashUntil = ts + 200;
+      G.obstacles = G.obstacles.filter(o => o !== ob);
+    }
+
+    function handleObstacleHit(ts, ob) {
+      G.lives--;
+      G.collisions++;
+      G.flashUntil = ts + 400;
+      G.shakeUntil = ts + SHAKE_MS;
+      G.invincible = true;
+      G.invincibleUntil = ts + INVINC_MS;
+      G.obstacles = G.obstacles.filter(o => o !== ob);
+      if (G.lives <= 0) triggerGameOver();
+    }
+
+    function checkCollisions(ts) {
+      if (G.invincible && ts < G.invincibleUntil) return;
+
+      const pw = OB_SIZE['skier'].w * HITBOX_FACTOR;
+      const ph = OB_SIZE['skier'].h * HITBOX_FACTOR;
+      const px = G.player.x - pw / 2;
+      const py = PLAYER_Y + (OB_SIZE['skier'].h - ph) / 2;
+
+      for (const ob of G.obstacles) {
+        const ow = OB_SIZE[ob.type].w * HITBOX_FACTOR;
+        const oh = OB_SIZE[ob.type].h * HITBOX_FACTOR;
+        const ox = ob.x - OB_SIZE[ob.type].w / 2 + OB_SIZE[ob.type].w * (1 - HITBOX_FACTOR) / 2;
+        const oy = ob.y - OB_SIZE[ob.type].h + OB_SIZE[ob.type].h * (1 - HITBOX_FACTOR) / 2;
+
+        if (!rectsOverlap(px, py, pw, ph, ox, oy, ow, oh)) continue;
+
+        if (ob.type === 'flag') {
+          handleFlagHit(ts, ob);
+        } else {
+          handleObstacleHit(ts, ob);
+        }
+        break;
+      }
+    }
+
+    function triggerGameOver() {
+      G.phase = 'gameover';
+      G.score = Math.floor(G.distance / Math.max(1, G.collisions));
+      showGameOver();
+    }
+
+    // ── API & LEADERBOARD ────────────────────────────────────────
+    async function fetchScores() {
+      try {
+        const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, { cache: 'no-store' });
+        return res.ok ? res.json() : [];
+      } catch { return []; }
+    }
+
+    async function submitScore(name, score) {
+      try {
+        const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, score }),
+        });
+        return res.ok ? res.json() : [];
+      } catch { return []; }
+    }
+
+    function renderLeaderboard(containerId, entries, highlightName) {
+      const el = document.getElementById(containerId);
+      if (!entries || !entries.length) {
+        el.innerHTML = '<div class="lb-entry" style="justify-content:center;color:#4466aa">— sem scores ainda —</div>';
+        return;
+      }
+      el.innerHTML = entries.slice(0, 10).map((e, i) => `
     <div class="lb-entry ${e.name === highlightName ? 'highlight' : ''}">
       <span class="rank">${i + 1}.</span>
       <span>${e.name}</span>
       <span class="score-val">${e.score}</span>
     </div>
   `).join('');
-}
+    }
 
-// ── START SCREEN ─────────────────────────────────────────────
-async function initStartScreen() {
-  const scores = await fetchScores();
-  renderLeaderboard('lb-start-entries', scores, '');
-}
+    // ── START SCREEN ─────────────────────────────────────────────
+    async function initStartScreen() {
+      const scores = await fetchScores();
+      renderLeaderboard('lb-start-entries', scores, '');
+    }
 
-function startGame() {
-  const input = document.getElementById('nameInput');
-  const name  = input.value.trim().toUpperCase();
-  if (!name) {
-    input.classList.remove('input-error');
-    void input.offsetWidth;
-    input.classList.add('input-error');
-    return;
-  }
-  G = makeState();
-  G.phase      = 'playing';
-  G.startTime  = performance.now();
-  G.lastTime   = performance.now();
-  G.playerName = name;
-  document.getElementById('screen-start').classList.add('hidden');
-  document.getElementById('screen-gameover').classList.add('hidden');
-}
+    function startGame() {
+      const input = document.getElementById('nameInput');
+      const name = input.value.trim().toUpperCase();
+      if (!name) {
+        input.classList.remove('input-error');
+        void input.offsetWidth;
+        input.classList.add('input-error');
+        return;
+      }
+      G = makeState();
+      G.phase = 'playing';
+      G.startTime = performance.now();
+      G.lastTime = performance.now();
+      G.playerName = name;
+      document.getElementById('screen-start').classList.add('hidden');
+      document.getElementById('screen-gameover').classList.add('hidden');
+    }
 
-document.getElementById('btn-start').addEventListener('click', startGame);
-document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') startGame();
-});
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('nameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startGame();
+    });
 
-// ── GAME OVER ────────────────────────────────────────────────
-async function showGameOver() {
-  document.getElementById('screen-gameover').classList.remove('hidden');
+    // ── GAME OVER ────────────────────────────────────────────────
+    async function showGameOver() {
+      document.getElementById('screen-gameover').classList.remove('hidden');
 
-  document.getElementById('go-stats').innerHTML =
-    `DISTÂNCIA: <strong>${Math.floor(G.distance)}m</strong><br>` +
-    `COLISÕES: <strong>${G.collisions}</strong>`;
-  document.getElementById('go-score').textContent = G.score;
+      document.getElementById('go-stats').innerHTML =
+        `DISTÂNCIA: <strong>${Math.floor(G.distance)}m</strong><br>` +
+        `COLISÕES: <strong>${G.collisions}</strong>`;
+      document.getElementById('go-score').textContent = G.score;
 
-  // Auto-submit score usando o nome da tela inicial
-  const scores = await submitScore(G.playerName, G.score);
-  renderLeaderboard('lb-go-entries', scores, G.playerName);
-}
+      // Auto-submit score usando o nome da tela inicial
+      const scores = await submitScore(G.playerName, G.score);
+      renderLeaderboard('lb-go-entries', scores, G.playerName);
+    }
 
-document.getElementById('btn-restart').addEventListener('click', () => {
-  document.getElementById('screen-gameover').classList.add('hidden');
-  document.getElementById('screen-start').classList.remove('hidden');
-  initStartScreen();
-});
-initStartScreen();
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      document.getElementById('screen-gameover').classList.add('hidden');
+      document.getElementById('screen-start').classList.remove('hidden');
+      initStartScreen();
+    });
+    initStartScreen();
 
-// ── MOBILE BUTTONS ───────────────────────────────────────────
-if (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches) {
-  document.getElementById('mobile-btns').style.display = 'flex';
-}
+    // ── MOBILE BUTTONS ───────────────────────────────────────────
+    if (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches) {
+      document.getElementById('mobile-btns').style.display = 'flex';
+    }
 
-requestAnimationFrame(gameLoop);
-</script>
+    requestAnimationFrame(gameLoop);
+  </script>
 </body>
+
 </html>
