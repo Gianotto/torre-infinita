@@ -376,6 +376,301 @@ function drawFlag(ctx, x, y) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + S,    y + 10*S, 4*S,   S);
 }
+
+// ── BACKGROUND ───────────────────────────────────────────────
+const SNOW_DOTS = Array.from({ length: 60 }, () => ({
+  x: Math.random() * CW,
+  y: Math.random() * GAME_H + HUD_H,
+}));
+
+function drawBackground(ctx) {
+  const grad = ctx.createLinearGradient(0, HUD_H, 0, CH - BTN_H);
+  grad.addColorStop(0, '#b0d4f8');
+  grad.addColorStop(0.5, '#d4ecff');
+  grad.addColorStop(1, '#eef6ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, HUD_H, CW, GAME_H);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  const offset = G.scrolled % 80;
+  SNOW_DOTS.forEach(d => {
+    const y = ((d.y - HUD_H + offset) % GAME_H) + HUD_H;
+    ctx.fillRect(Math.floor(d.x), Math.floor(y), 1, 1);
+  });
+}
+
+function drawTracks(ctx) {
+  ctx.strokeStyle = 'rgba(150,195,240,0.45)';
+  ctx.lineWidth = S;
+  ctx.setLineDash([4, 6]);
+  const px = G.player.x;
+  ctx.beginPath();
+  ctx.moveTo(px - 3*S, PLAYER_Y + 14*S);
+  ctx.lineTo(px - 5*S, CH - BTN_H);
+  ctx.moveTo(px + 3*S, PLAYER_Y + 14*S);
+  ctx.lineTo(px + 5*S, CH - BTN_H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawHUD(ctx, ts) {
+  ctx.fillStyle = 'rgba(5,10,20,0.88)';
+  ctx.fillRect(0, 0, CW, HUD_H);
+
+  for (let i = 0; i < LIVES_MAX; i++) {
+    drawHeart(ctx, 8 + i * 18, 12, i < G.lives);
+  }
+
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 11px Courier New';
+  ctx.fillText(`${Math.floor(G.distance)}m`, CW / 2 - 30, 25);
+
+  ctx.fillStyle = '#a8d8ff';
+  ctx.font = '10px Courier New';
+  ctx.fillText(`SCORE: ${G.score}`, CW - 110, 25);
+
+  if (ts < G.flagSlowUntil || ts < G.flagRampUntil) {
+    const remaining = Math.max(0, G.flagSlowUntil - ts);
+    const ratio = remaining / FLAG_SLOW_MS;
+    ctx.fillStyle = '#332200';
+    ctx.fillRect(8, 34, CW - 16, 4);
+    ctx.fillStyle = '#ffdd00';
+    ctx.fillRect(8, 34, (CW - 16) * ratio, 4);
+  }
+}
+
+// ── CANVAS REFERENCE ─────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+
+// ── GAME LOOP ────────────────────────────────────────────────
+function gameLoop(ts) {
+  requestAnimationFrame(gameLoop);
+
+  const dt = Math.min((ts - (G.lastTime || ts)) / (1000 / 60), 3);
+  G.lastTime = ts;
+
+  if (G.phase !== 'playing') return;
+
+  update(dt, ts);
+  render(ts);
+}
+
+function update(dt, ts) {
+  updateSpeed(dt, ts);
+  G.scrolled += G.speed * dt;
+  updatePlayer(dt);
+  updateObstacles(dt);
+  checkCollisions(ts);
+  if (G.invincible && ts >= G.invincibleUntil) G.invincible = false;
+  updateScore();
+}
+
+function render(ts) {
+  const shake = ts < G.shakeUntil;
+  if (shake) {
+    ctx.save();
+    ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+  }
+
+  drawBackground(ctx);
+  drawTracks(ctx);
+  drawObstacles(ctx);
+
+  // Player — blink during invincibility
+  const blink = G.invincible && Math.floor(ts / 62) % 2 === 0;
+  if (!blink) {
+    drawSkier(ctx, G.player.x - 4*S, PLAYER_Y, '#1a6bb5', '#dd2222');
+  }
+
+  // Yellow shimmer during flag slowdown
+  if (ts < G.flagSlowUntil) {
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = '#ffdd00';
+    ctx.fillRect(G.player.x - 6*S, PLAYER_Y - S, 16*S, 16*S);
+    ctx.restore();
+  }
+
+  // Flash overlay
+  if (ts < G.flashUntil) {
+    const isFlagFlash = ts < G.flagSlowUntil || ts < G.flagRampUntil;
+    ctx.fillStyle = isFlagFlash ? 'rgba(255,220,0,0.25)' : 'rgba(255,30,50,0.35)';
+    ctx.fillRect(0, HUD_H, CW, GAME_H);
+  }
+
+  drawHUD(ctx, ts);
+
+  if (shake) ctx.restore();
+}
+
+function updateSpeed(dt, ts) {
+  const elapsed = ts - G.startTime;
+
+  if (ts < G.flagSlowUntil) {
+    G.speed = MAX_SPEED * FLAG_SPEED_FACTOR;
+  } else if (ts < G.flagRampUntil) {
+    const rampProgress = 1 - (G.flagRampUntil - ts) / FLAG_RAMP_MS;
+    G.speed = MAX_SPEED * FLAG_SPEED_FACTOR + MAX_SPEED * (1 - FLAG_SPEED_FACTOR) * rampProgress;
+  } else if (elapsed < ACCEL_MS) {
+    G.speed = MAX_SPEED * (elapsed / ACCEL_MS);
+  } else {
+    G.speed = MAX_SPEED;
+  }
+}
+
+function updatePlayer(dt) {
+  if (keys.left)        G.player.vx = -PLAYER_SPEED_X;
+  else if (keys.right)  G.player.vx =  PLAYER_SPEED_X;
+  else                  G.player.vx =  0;
+  G.player.x = Math.max(10*S, Math.min(CW - 10*S, G.player.x + G.player.vx * dt));
+}
+
+function updateScore() {
+  G.distance = G.scrolled * M_PER_PX;
+  G.score    = Math.floor(G.distance / Math.max(1, G.collisions));
+}
+
+requestAnimationFrame(gameLoop);
+
+// ── INPUT ────────────────────────────────────────────────────
+const keys = { left: false, right: false };
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+});
+
+document.getElementById('btn-left').addEventListener('touchstart',  e => { e.preventDefault(); keys.left  = true;  }, { passive: false });
+document.getElementById('btn-left').addEventListener('touchend',    e => { e.preventDefault(); keys.left  = false; }, { passive: false });
+document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys.right = true;  }, { passive: false });
+document.getElementById('btn-right').addEventListener('touchend',   e => { e.preventDefault(); keys.right = false; }, { passive: false });
+document.getElementById('btn-left').addEventListener('mousedown',  () => keys.left  = true);
+document.getElementById('btn-left').addEventListener('mouseup',    () => keys.left  = false);
+document.getElementById('btn-right').addEventListener('mousedown', () => keys.right = true);
+document.getElementById('btn-right').addEventListener('mouseup',   () => keys.right = false);
+
+// ── OBSTACLES ────────────────────────────────────────────────
+const OB_TYPES = ['tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
+
+const OB_SIZE = {
+  tree:   { w: 6*S,  h: 12*S },
+  dog:    { w: 10*S, h: 10*S },
+  skier:  { w: 8*S,  h: 14*S },
+  flag:   { w: 8*S,  h: 12*S },
+};
+
+function spawnObstacle() {
+  const type = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
+  const margin = 50;
+  const x = margin + Math.random() * (CW - margin * 2);
+  G.obstacles.push({
+    type,
+    x,
+    y: CH - BTN_H + 20,
+    phase: Math.random() * Math.PI * 2,
+  });
+}
+
+function updateObstacles(dt) {
+  if (G.scrolled >= G.nextSpawnAt) {
+    spawnObstacle();
+    G.nextSpawnAt = G.scrolled + SPAWN_DIST + Math.random() * 80;
+  }
+
+  for (const ob of G.obstacles) {
+    if (ob.type === 'skier') {
+      ob.y -= G.speed * 0.6 * dt;
+    } else {
+      ob.y -= G.speed * dt;
+    }
+
+    if (ob.type === 'dog') {
+      ob.phase += 0.03 * dt;
+      ob.x += Math.sin(ob.phase) * 1.5;
+      ob.x = Math.max(20, Math.min(CW - 20, ob.x));
+    }
+  }
+
+  G.obstacles = G.obstacles.filter(ob => ob.y > HUD_H - 30);
+}
+
+function drawObstacles(ctx) {
+  for (const ob of G.obstacles) {
+    if (ob.y < HUD_H - 20 || ob.y > CH - BTN_H + 10) continue;
+    const x = Math.floor(ob.x - OB_SIZE[ob.type].w / 2);
+    const y = Math.floor(ob.y - OB_SIZE[ob.type].h);
+    switch (ob.type) {
+      case 'tree':   drawTree(ctx, x, y);                         break;
+      case 'dog':    drawDog(ctx, x, y);                          break;
+      case 'skier':  drawSkier(ctx, x, y, '#aa2200', '#cc5500');  break;
+      case 'flag':   drawFlag(ctx, x, y);                         break;
+    }
+  }
+}
+
+// ── COLLISION ────────────────────────────────────────────────
+function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx &&
+         ay < by + bh && ay + ah > by;
+}
+
+function handleFlagHit(ts, ob) {
+  G.flagSlowUntil = ts + FLAG_SLOW_MS;
+  G.flagRampUntil = ts + FLAG_SLOW_MS + FLAG_RAMP_MS;
+  G.flashUntil    = ts + 200;
+  G.obstacles = G.obstacles.filter(o => o !== ob);
+}
+
+function handleObstacleHit(ts, ob) {
+  G.lives--;
+  G.collisions++;
+  G.flashUntil = ts + 400;
+  G.shakeUntil = ts + SHAKE_MS;
+  G.invincible = true;
+  G.invincibleUntil = ts + INVINC_MS;
+  G.obstacles = G.obstacles.filter(o => o !== ob);
+  if (G.lives <= 0) triggerGameOver();
+}
+
+function checkCollisions(ts) {
+  if (G.invincible && ts < G.invincibleUntil) return;
+
+  const pw = OB_SIZE['skier'].w * HITBOX_FACTOR;
+  const ph = OB_SIZE['skier'].h * HITBOX_FACTOR;
+  const px = G.player.x - pw / 2;
+  const py = PLAYER_Y + OB_SIZE['skier'].h * (1 - HITBOX_FACTOR) / 2;
+
+  for (const ob of G.obstacles) {
+    const ow = OB_SIZE[ob.type].w * HITBOX_FACTOR;
+    const oh = OB_SIZE[ob.type].h * HITBOX_FACTOR;
+    const ox = ob.x - OB_SIZE[ob.type].w / 2 + OB_SIZE[ob.type].w * (1 - HITBOX_FACTOR) / 2;
+    const oy = ob.y - OB_SIZE[ob.type].h + OB_SIZE[ob.type].h * (1 - HITBOX_FACTOR) / 2;
+
+    if (!rectsOverlap(px, py, pw, ph, ox, oy, ow, oh)) continue;
+
+    if (ob.type === 'flag') {
+      handleFlagHit(ts, ob);
+    } else {
+      handleObstacleHit(ts, ob);
+    }
+    break;
+  }
+}
+
+function triggerGameOver() {
+  G.phase = 'gameover';
+  G.score = Math.floor(G.distance / Math.max(1, G.collisions));
+  showGameOver();
+}
+
+function showGameOver() {
+  document.getElementById('screen-gameover').classList.remove('hidden');
+}
 </script>
 </body>
 </html>
