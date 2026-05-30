@@ -35,3 +35,4 @@ ecosystem.config.local.js
 
 # Docs internos de planejamento
 docs/superpowers/
+.superpowers/
