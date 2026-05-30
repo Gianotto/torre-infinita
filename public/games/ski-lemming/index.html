@@ -210,9 +210,6 @@
       <h1 class="game-title" style="font-size:26px; margin-bottom:0">GAME OVER</h1>
       <div id="go-stats" class="gameover-stats"></div>
       <div id="go-score" class="gameover-score"></div>
-      <label class="field-label" for="nameInputGO">NOME DO JOGADOR</label>
-      <input type="text" id="nameInputGO" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
-      <button class="btn btn-primary" id="btn-submit">ENVIAR SCORE</button>
       <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
       <div class="leaderboard">
         <div class="lb-title">∙ TOP 10 ∙</div>
@@ -240,9 +237,9 @@ const HUD_H         = 40;           // top HUD bar height
 const BTN_H         = 40;           // bottom mobile-btn zone height
 const GAME_H        = CH - HUD_H - BTN_H; // 620 — playfield height
 const S             = 2;            // sprite pixel scale
-const MAX_SPEED     = 5;            // world scroll px/frame at 60 fps
-const ACCEL_MS      = 3000;         // ms to reach MAX_SPEED from 0
-const SPAWN_DIST    = 200;          // px of scroll between obstacle spawns
+const MAX_SPEED     = 8;            // ← VELOCIDADE: aumente/diminua este valor (era 5)
+const ACCEL_MS      = 2000;         // ms para atingir velocidade máxima
+const SPAWN_DIST    = 120;          // px de scroll entre spawns de obstáculos
 const HITBOX_FACTOR = 0.60;         // collision hitbox shrink factor
 const INVINC_MS     = 1500;         // invincibility after collision (ms)
 const SHAKE_MS      = 300;          // screen shake duration (ms)
@@ -252,7 +249,7 @@ const FLAG_SPEED_FACTOR = 0.4;      // speed multiplier during slowdown
 const LIVES_MAX     = 3;
 const M_PER_PX      = 0.1;          // 1 m per 10 px scrolled
 const PLAYER_Y      = HUD_H + 110;  // player fixed Y (~18% into game area = y≈150)
-const PLAYER_SPEED_X = 3;           // horizontal speed px/frame (≈180px/s at 60fps)
+const PLAYER_SPEED_X = 5;           // horizontal speed px/frame
 
 // ── STATE ────────────────────────────────────────────────────
 function makeState() {
@@ -291,35 +288,44 @@ function drawHeart(ctx, x, y, filled) {
   ctx.fillRect(x+2*S, y+4*S, 2*S,   S);
 }
 
-function drawSkier(ctx, x, y, helmetCol, bodyCol) {
-  // skis
+// dir: -1=virando esquerda, 0=reto, 1=virando direita
+function drawSkier(ctx, x, y, helmetCol, bodyCol, dir) {
+  dir = dir || 0;
+  const sd = dir * 3; // deslocamento dos skis/pernas ao virar
+
+  // skis — deslocam e ficam levemente assimétricos ao virar
   ctx.fillStyle = '#777';
-  ctx.fillRect(x - 3*S, y + 12*S, 14*S, S);
-  // poles
-  ctx.fillStyle = '#aaa';
-  ctx.fillRect(x - S, y + 5*S, S, 7*S);
-  ctx.fillRect(x + 8*S, y + 5*S, S, 7*S);
-  // legs
+  ctx.fillRect(x - 3*S + sd, y + 12*S, 14*S, S);
+  if (dir < 0) ctx.fillRect(x - 4*S, y + 13*S, 5*S, S); // tip esquerdo desce
+  if (dir > 0) ctx.fillRect(x + 7*S, y + 13*S, 5*S, S); // tip direito desce
+
+  // pernas — seguem os skis
   ctx.fillStyle = '#1a3a6a';
-  ctx.fillRect(x + 2*S, y + 9*S, 2*S, 3*S);
-  ctx.fillRect(x + 4*S, y + 9*S, 2*S, 3*S);
-  // body + arms
+  ctx.fillRect(x + 2*S + sd, y + 9*S, 2*S, 3*S);
+  ctx.fillRect(x + 4*S + sd, y + 9*S, 2*S, 3*S);
+
+  // poles — o polo exterior estende ao virar
+  ctx.fillStyle = '#aaa';
+  ctx.fillRect(x - S,    y + 5*S, S, 7*S + (dir < 0 ? 2*S : 0));
+  ctx.fillRect(x + 8*S,  y + 5*S, S, 7*S + (dir > 0 ? 2*S : 0));
+
+  // corpo + braços — braço interno sobe levemente (lean)
   ctx.fillStyle = bodyCol;
-  ctx.fillRect(x + S,   y + 5*S, 6*S, 5*S);
-  ctx.fillRect(x - S,   y + 5*S, 2*S, 3*S);
-  ctx.fillRect(x + 7*S, y + 5*S, 2*S, 3*S);
-  // neck
+  ctx.fillRect(x + S,   y + 5*S,                6*S, 5*S);
+  ctx.fillRect(x - S,   y + 5*S + (dir > 0 ? S : 0), 2*S, 3*S - (dir > 0 ? S : 0));
+  ctx.fillRect(x + 7*S, y + 5*S + (dir < 0 ? S : 0), 2*S, 3*S - (dir < 0 ? S : 0));
+
+  // pescoço + rosto (ficam centrados)
   ctx.fillStyle = '#ffd0a0';
   ctx.fillRect(x + 3*S, y + 3*S, 2*S, 2*S);
-  // face
   ctx.fillRect(x + 2*S, y + S,   4*S, 4*S);
   ctx.fillRect(x + S,   y + 2*S,   S, 2*S);
   ctx.fillRect(x + 7*S, y + 2*S,   S, 2*S);
-  // eyes
+  // olhos
   ctx.fillStyle = '#222';
   ctx.fillRect(x + 3*S, y + 2*S, S, S);
   ctx.fillRect(x + 5*S, y + 2*S, S, S);
-  // helmet
+  // capacete
   ctx.fillStyle = helmetCol;
   ctx.fillRect(x + S,   y,        6*S, 2*S);
   ctx.fillRect(x + 2*S, y - S,    4*S, 2*S);
@@ -378,9 +384,12 @@ function drawFlag(ctx, x, y) {
 }
 
 // ── BACKGROUND ───────────────────────────────────────────────
-const SNOW_DOTS = Array.from({ length: 60 }, () => ({
+const SNOW_DOTS = Array.from({ length: 180 }, () => ({
   x: Math.random() * CW,
   y: Math.random() * GAME_H + HUD_H,
+  size: Math.random() < 0.2 ? 2 : 1,           // 20% são 2×2 px
+  alpha: 0.35 + Math.random() * 0.55,
+  tint: Math.random() < 0.3,                    // 30% com tom azulado
 }));
 
 function drawBackground(ctx) {
@@ -391,26 +400,14 @@ function drawBackground(ctx) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, HUD_H, CW, GAME_H);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
   const offset = G.scrolled % 80;
   SNOW_DOTS.forEach(d => {
     const y = ((d.y - HUD_H + offset) % GAME_H) + HUD_H;
-    ctx.fillRect(Math.floor(d.x), Math.floor(y), 1, 1);
+    ctx.fillStyle = d.tint
+      ? `rgba(180,210,255,${d.alpha})`
+      : `rgba(255,255,255,${d.alpha})`;
+    ctx.fillRect(Math.floor(d.x), Math.floor(y), d.size, d.size);
   });
-}
-
-function drawTracks(ctx) {
-  ctx.strokeStyle = 'rgba(150,195,240,0.45)';
-  ctx.lineWidth = S;
-  ctx.setLineDash([4, 6]);
-  const px = G.player.x;
-  ctx.beginPath();
-  ctx.moveTo(px - 3*S, PLAYER_Y + 14*S);
-  ctx.lineTo(px - 5*S, CH - BTN_H);
-  ctx.moveTo(px + 3*S, PLAYER_Y + 14*S);
-  ctx.lineTo(px + 5*S, CH - BTN_H);
-  ctx.stroke();
-  ctx.setLineDash([]);
 }
 
 function drawHUD(ctx, ts) {
@@ -474,13 +471,13 @@ function render(ts) {
   }
 
   drawBackground(ctx);
-  drawTracks(ctx);
   drawObstacles(ctx);
 
-  // Player — blink during invincibility
+  // Player — blink during invincibility, animação virar
   const blink = G.invincible && Math.floor(ts / 62) % 2 === 0;
   if (!blink) {
-    drawSkier(ctx, G.player.x - 4*S, PLAYER_Y, '#1a6bb5', '#dd2222');
+    const dir = G.player.vx < -0.5 ? -1 : G.player.vx > 0.5 ? 1 : 0;
+    drawSkier(ctx, G.player.x - 4*S, PLAYER_Y, '#1a6bb5', '#dd2222', dir);
   }
 
   // Yellow shimmer during flag slowdown
@@ -553,7 +550,7 @@ document.getElementById('btn-right').addEventListener('mousedown', () => keys.ri
 document.addEventListener('mouseup', () => { keys.left = false; keys.right = false; });
 
 // ── OBSTACLES ────────────────────────────────────────────────
-const OB_TYPES = ['tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
+const OB_TYPES = ['tree', 'tree', 'tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
 
 const OB_SIZE = {
   tree:   { w: 6*S,  h: 12*S },
@@ -612,7 +609,7 @@ function drawObstacles(ctx) {
     switch (ob.type) {
       case 'tree':   drawTree(ctx, x, y);                         break;
       case 'dog':    drawDog(ctx, x, y);                          break;
-      case 'skier':  drawSkier(ctx, x, y, '#aa2200', '#cc5500');  break;
+      case 'skier':  drawSkier(ctx, x, y, '#aa2200', '#cc5500', 0);  break;
       case 'flag':   drawFlag(ctx, x, y);                         break;
     }
   }
@@ -738,49 +735,23 @@ document.getElementById('nameInput').addEventListener('keydown', e => {
 
 // ── GAME OVER ────────────────────────────────────────────────
 async function showGameOver() {
-  const screen = document.getElementById('screen-gameover');
-  screen.classList.remove('hidden');
+  document.getElementById('screen-gameover').classList.remove('hidden');
 
   document.getElementById('go-stats').innerHTML =
     `DISTÂNCIA: <strong>${Math.floor(G.distance)}m</strong><br>` +
     `COLISÕES: <strong>${G.collisions}</strong>`;
   document.getElementById('go-score').textContent = G.score;
 
-  const goInput = document.getElementById('nameInputGO');
-  goInput.value = G.playerName;
-
-  const scores = await fetchScores();
+  // Auto-submit score usando o nome da tela inicial
+  const scores = await submitScore(G.playerName, G.score);
   renderLeaderboard('lb-go-entries', scores, G.playerName);
 }
 
-async function submitAndRefresh() {
-  const input = document.getElementById('nameInputGO');
-  const name  = input.value.trim().toUpperCase();
-  if (!name) {
-    input.classList.remove('input-error');
-    void input.offsetWidth;
-    input.classList.add('input-error');
-    return;
-  }
-  const btn = document.getElementById('btn-submit');
-  btn.disabled = true;
-  btn.textContent = 'ENVIANDO...';
-  const scores = await submitScore(name, G.score);
-  renderLeaderboard('lb-go-entries', scores, name);
-  btn.disabled = false;
-  btn.textContent = 'ENVIADO ✓';
-}
-
-document.getElementById('btn-submit').addEventListener('click', submitAndRefresh);
 document.getElementById('btn-restart').addEventListener('click', () => {
   document.getElementById('screen-gameover').classList.add('hidden');
   document.getElementById('screen-start').classList.remove('hidden');
   initStartScreen();
 });
-document.getElementById('nameInputGO').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitAndRefresh();
-});
-
 initStartScreen();
 
 // ── MOBILE BUTTONS ───────────────────────────────────────────
