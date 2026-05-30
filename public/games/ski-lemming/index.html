@@ -430,8 +430,8 @@ function drawHUD(ctx, ts) {
   ctx.fillText(`SCORE: ${G.score}`, CW - 110, 25);
 
   if (ts < G.flagSlowUntil || ts < G.flagRampUntil) {
-    const remaining = Math.max(0, G.flagSlowUntil - ts);
-    const ratio = remaining / FLAG_SLOW_MS;
+    const remaining = Math.max(0, G.flagRampUntil - ts);
+    const ratio = remaining / (FLAG_SLOW_MS + FLAG_RAMP_MS);
     ctx.fillStyle = '#332200';
     ctx.fillRect(8, 34, CW - 16, 4);
     ctx.fillStyle = '#ffdd00';
@@ -520,9 +520,10 @@ function updateSpeed(dt, ts) {
 }
 
 function updatePlayer(dt) {
-  if (keys.left)        G.player.vx = -PLAYER_SPEED_X;
-  else if (keys.right)  G.player.vx =  PLAYER_SPEED_X;
-  else                  G.player.vx =  0;
+  const accel = PLAYER_SPEED_X * 0.3;
+  if (keys.left)        G.player.vx = Math.max(G.player.vx - accel * dt, -PLAYER_SPEED_X);
+  else if (keys.right)  G.player.vx = Math.min(G.player.vx + accel * dt,  PLAYER_SPEED_X);
+  else                  G.player.vx *= Math.pow(0.8, dt);
   G.player.x = Math.max(10*S, Math.min(CW - 10*S, G.player.x + G.player.vx * dt));
 }
 
@@ -530,8 +531,6 @@ function updateScore() {
   G.distance = G.scrolled * M_PER_PX;
   G.score    = Math.floor(G.distance / Math.max(1, G.collisions));
 }
-
-requestAnimationFrame(gameLoop);
 
 // ── INPUT ────────────────────────────────────────────────────
 const keys = { left: false, right: false };
@@ -565,9 +564,16 @@ const OB_SIZE = {
 };
 
 function spawnObstacle() {
-  const type = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
+  const type   = OB_TYPES[Math.floor(Math.random() * OB_TYPES.length)];
   const margin = 50;
-  const x = margin + Math.random() * (CW - margin * 2);
+  let x, attempts = 0;
+  do {
+    x = margin + Math.random() * (CW - margin * 2);
+    attempts++;
+  } while (
+    attempts < 10 &&
+    G.obstacles.some(ob => ob.y > CH - BTN_H - 50 && Math.abs(ob.x - x) < 60)
+  );
   G.obstacles.push({
     type,
     x,
@@ -591,7 +597,7 @@ function updateObstacles(dt) {
 
     if (ob.type === 'dog') {
       ob.phase += 0.03 * dt;
-      ob.x += Math.sin(ob.phase) * 1.5;
+      ob.x += Math.sin(ob.phase) * 1.5 * dt;
       ob.x = Math.max(20, Math.min(CW - 20, ob.x));
     }
   }
@@ -643,7 +649,7 @@ function checkCollisions(ts) {
   const pw = OB_SIZE['skier'].w * HITBOX_FACTOR;
   const ph = OB_SIZE['skier'].h * HITBOX_FACTOR;
   const px = G.player.x - pw / 2;
-  const py = PLAYER_Y + OB_SIZE['skier'].h * (1 - HITBOX_FACTOR) / 2;
+  const py = PLAYER_Y + (OB_SIZE['skier'].h - ph) / 2;
 
   for (const ob of G.obstacles) {
     const ow = OB_SIZE[ob.type].w * HITBOX_FACTOR;
@@ -671,6 +677,8 @@ function triggerGameOver() {
 function showGameOver() {
   document.getElementById('screen-gameover').classList.remove('hidden');
 }
+
+requestAnimationFrame(gameLoop);
 </script>
 </body>
 </html>
