@@ -549,9 +549,8 @@ document.getElementById('btn-left').addEventListener('touchend',    e => { e.pre
 document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys.right = true;  }, { passive: false });
 document.getElementById('btn-right').addEventListener('touchend',   e => { e.preventDefault(); keys.right = false; }, { passive: false });
 document.getElementById('btn-left').addEventListener('mousedown',  () => keys.left  = true);
-document.getElementById('btn-left').addEventListener('mouseup',    () => keys.left  = false);
 document.getElementById('btn-right').addEventListener('mousedown', () => keys.right = true);
-document.getElementById('btn-right').addEventListener('mouseup',   () => keys.right = false);
+document.addEventListener('mouseup', () => { keys.left = false; keys.right = false; });
 
 // ── OBSTACLES ────────────────────────────────────────────────
 const OB_TYPES = ['tree', 'tree', 'tree', 'dog', 'skier', 'flag'];
@@ -674,8 +673,119 @@ function triggerGameOver() {
   showGameOver();
 }
 
-function showGameOver() {
-  document.getElementById('screen-gameover').classList.remove('hidden');
+// ── API & LEADERBOARD ────────────────────────────────────────
+async function fetchScores() {
+  try {
+    const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, { cache: 'no-store' });
+    return res.ok ? res.json() : [];
+  } catch { return []; }
+}
+
+async function submitScore(name, score) {
+  try {
+    const res = await fetch(`${API_BASE}/api/scores/${GAME_ID}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score }),
+    });
+    return res.ok ? res.json() : [];
+  } catch { return []; }
+}
+
+function renderLeaderboard(containerId, entries, highlightName) {
+  const el = document.getElementById(containerId);
+  if (!entries || !entries.length) {
+    el.innerHTML = '<div class="lb-entry" style="justify-content:center;color:#4466aa">— sem scores ainda —</div>';
+    return;
+  }
+  el.innerHTML = entries.slice(0, 10).map((e, i) => `
+    <div class="lb-entry ${e.name === highlightName ? 'highlight' : ''}">
+      <span class="rank">${i + 1}.</span>
+      <span>${e.name}</span>
+      <span class="score-val">${e.score}</span>
+    </div>
+  `).join('');
+}
+
+// ── START SCREEN ─────────────────────────────────────────────
+async function initStartScreen() {
+  const scores = await fetchScores();
+  renderLeaderboard('lb-start-entries', scores, '');
+}
+
+function startGame() {
+  const input = document.getElementById('nameInput');
+  const name  = input.value.trim().toUpperCase();
+  if (!name) {
+    input.classList.remove('input-error');
+    void input.offsetWidth;
+    input.classList.add('input-error');
+    return;
+  }
+  G = makeState();
+  G.phase      = 'playing';
+  G.startTime  = performance.now();
+  G.lastTime   = performance.now();
+  G.playerName = name;
+  document.getElementById('screen-start').classList.add('hidden');
+  document.getElementById('screen-gameover').classList.add('hidden');
+}
+
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startGame();
+});
+
+// ── GAME OVER ────────────────────────────────────────────────
+async function showGameOver() {
+  const screen = document.getElementById('screen-gameover');
+  screen.classList.remove('hidden');
+
+  document.getElementById('go-stats').innerHTML =
+    `DISTÂNCIA: <strong>${Math.floor(G.distance)}m</strong><br>` +
+    `COLISÕES: <strong>${G.collisions}</strong>`;
+  document.getElementById('go-score').textContent = G.score;
+
+  const goInput = document.getElementById('nameInputGO');
+  goInput.value = G.playerName;
+
+  const scores = await fetchScores();
+  renderLeaderboard('lb-go-entries', scores, G.playerName);
+}
+
+async function submitAndRefresh() {
+  const input = document.getElementById('nameInputGO');
+  const name  = input.value.trim().toUpperCase();
+  if (!name) {
+    input.classList.remove('input-error');
+    void input.offsetWidth;
+    input.classList.add('input-error');
+    return;
+  }
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'ENVIANDO...';
+  const scores = await submitScore(name, G.score);
+  renderLeaderboard('lb-go-entries', scores, name);
+  btn.disabled = false;
+  btn.textContent = 'ENVIADO ✓';
+}
+
+document.getElementById('btn-submit').addEventListener('click', submitAndRefresh);
+document.getElementById('btn-restart').addEventListener('click', () => {
+  document.getElementById('screen-gameover').classList.add('hidden');
+  document.getElementById('screen-start').classList.remove('hidden');
+  initStartScreen();
+});
+document.getElementById('nameInputGO').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAndRefresh();
+});
+
+initStartScreen();
+
+// ── MOBILE BUTTONS ───────────────────────────────────────────
+if (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches) {
+  document.getElementById('mobile-btns').style.display = 'flex';
 }
 
 requestAnimationFrame(gameLoop);
