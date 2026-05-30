@@ -231,7 +231,151 @@
 </div>
 
 <script>
-// GAME CODE — tasks 2-11 fill this script block
+// ── CONSTANTS ────────────────────────────────────────────────
+const GAME_ID       = 'ski-lemming';
+const API_BASE      = '../..';
+const CW            = 560;          // canvas width
+const CH            = 700;          // canvas height
+const HUD_H         = 40;           // top HUD bar height
+const BTN_H         = 40;           // bottom mobile-btn zone height
+const GAME_H        = CH - HUD_H - BTN_H; // 620 — playfield height
+const S             = 2;            // sprite pixel scale
+const MAX_SPEED     = 5;            // world scroll px/frame at 60 fps
+const ACCEL_MS      = 3000;         // ms to reach MAX_SPEED from 0
+const SPAWN_DIST    = 200;          // px of scroll between obstacle spawns
+const HITBOX_FACTOR = 0.60;         // collision hitbox shrink factor
+const INVINC_MS     = 1500;         // invincibility after collision (ms)
+const SHAKE_MS      = 300;          // screen shake duration (ms)
+const FLAG_SLOW_MS  = 2000;         // slowdown duration (ms)
+const FLAG_RAMP_MS  = 500;          // ms to ramp back to full speed
+const FLAG_SPEED_FACTOR = 0.4;      // speed multiplier during slowdown
+const LIVES_MAX     = 3;
+const M_PER_PX      = 0.1;          // 1 m per 10 px scrolled
+const PLAYER_Y      = HUD_H + 110;  // player fixed Y (~18% into game area = y≈150)
+const PLAYER_SPEED_X = 3;           // horizontal speed px/frame (≈180px/s at 60fps)
+
+// ── STATE ────────────────────────────────────────────────────
+function makeState() {
+  return {
+    phase: 'start',          // 'start' | 'playing' | 'gameover'
+    speed: 0,
+    scrolled: 0,             // total world px scrolled
+    distance: 0,             // meters (scrolled * M_PER_PX)
+    lives: LIVES_MAX,
+    collisions: 0,
+    player: { x: CW / 2, vx: 0 },
+    obstacles: [],
+    nextSpawnAt: SPAWN_DIST, // scrolled value at which next obstacle spawns
+    invincible: false,
+    invincibleUntil: 0,
+    flashUntil: 0,
+    shakeUntil: 0,
+    flagSlowUntil: 0,
+    flagRampUntil: 0,
+    startTime: 0,
+    score: 0,
+    lastTime: 0,
+    playerName: '',
+  };
+}
+let G = makeState();
+
+// ── SPRITES ─────────────────────────────────────────────────
+
+function drawHeart(ctx, x, y, filled) {
+  ctx.fillStyle = filled ? '#ff4466' : '#442233';
+  ctx.fillRect(x+S,   y,     2*S, 2*S);
+  ctx.fillRect(x+3*S, y,     2*S, 2*S);
+  ctx.fillRect(x,     y+S,   6*S, 2*S);
+  ctx.fillRect(x+S,   y+3*S, 4*S,   S);
+  ctx.fillRect(x+2*S, y+4*S, 2*S,   S);
+}
+
+function drawSkier(ctx, x, y, helmetCol, bodyCol) {
+  // skis
+  ctx.fillStyle = '#777';
+  ctx.fillRect(x - 3*S, y + 12*S, 14*S, S);
+  // poles
+  ctx.fillStyle = '#aaa';
+  ctx.fillRect(x - S, y + 5*S, S, 7*S);
+  ctx.fillRect(x + 8*S, y + 5*S, S, 7*S);
+  // legs
+  ctx.fillStyle = '#1a3a6a';
+  ctx.fillRect(x + 2*S, y + 9*S, 2*S, 3*S);
+  ctx.fillRect(x + 4*S, y + 9*S, 2*S, 3*S);
+  // body + arms
+  ctx.fillStyle = bodyCol;
+  ctx.fillRect(x + S,   y + 5*S, 6*S, 5*S);
+  ctx.fillRect(x - S,   y + 5*S, 2*S, 3*S);
+  ctx.fillRect(x + 7*S, y + 5*S, 2*S, 3*S);
+  // neck
+  ctx.fillStyle = '#ffd0a0';
+  ctx.fillRect(x + 3*S, y + 3*S, 2*S, 2*S);
+  // face
+  ctx.fillRect(x + 2*S, y + S,   4*S, 4*S);
+  ctx.fillRect(x + S,   y + 2*S,   S, 2*S);
+  ctx.fillRect(x + 7*S, y + 2*S,   S, 2*S);
+  // eyes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(x + 3*S, y + 2*S, S, S);
+  ctx.fillRect(x + 5*S, y + 2*S, S, S);
+  // helmet
+  ctx.fillStyle = helmetCol;
+  ctx.fillRect(x + S,   y,        6*S, 2*S);
+  ctx.fillRect(x + 2*S, y - S,    4*S, 2*S);
+}
+
+function drawTree(ctx, x, y) {
+  ctx.fillStyle = '#5a3010';
+  ctx.fillRect(x + 2*S, y + 8*S, 2*S, 4*S);
+  ctx.fillStyle = '#1a6b1a';
+  ctx.fillRect(x,        y + 5*S, 6*S, 4*S);
+  ctx.fillStyle = '#228b22';
+  ctx.fillRect(x + S,    y + 2*S, 4*S, 4*S);
+  ctx.fillStyle = '#2eb52e';
+  ctx.fillRect(x + 2*S,  y,       2*S, 3*S);
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.fillRect(x + S,    y + 2*S,   S, S);
+  ctx.fillRect(x + 2*S,  y,         S, S);
+}
+
+function drawDog(ctx, x, y) {
+  ctx.fillStyle = '#a0742a';
+  ctx.fillRect(x + S,    y + 3*S, 7*S, 4*S);
+  ctx.fillStyle = '#c09040';
+  ctx.fillRect(x + 6*S,  y + S,   4*S, 4*S);
+  ctx.fillStyle = '#d4a855';
+  ctx.fillRect(x + 8*S,  y + 3*S, 2*S, 2*S);
+  ctx.fillStyle = '#8a5c1a';
+  ctx.fillRect(x + 6*S,  y,       2*S, 2*S);
+  ctx.fillStyle = '#7a5820';
+  ctx.fillRect(x + 2*S,  y + 7*S, 2*S, 3*S);
+  ctx.fillRect(x + 5*S,  y + 7*S, 2*S, 3*S);
+  ctx.fillStyle = '#c09040';
+  ctx.fillRect(x,         y + 2*S, 2*S, 2*S);
+  ctx.fillStyle = '#333';
+  ctx.fillRect(x + 9*S,  y + 3*S,   S, S);
+}
+
+function drawFlag(ctx, x, y) {
+  // pole
+  ctx.fillStyle = '#888';
+  ctx.fillRect(x + 2*S, y,         S,   10*S);
+  // flag
+  ctx.fillStyle = '#dd1111';
+  ctx.fillRect(x + 3*S, y,         5*S, 4*S);
+  ctx.fillStyle = '#ff4444';
+  ctx.fillRect(x + 3*S, y,         5*S,   S);
+  ctx.fillRect(x + 3*S, y,           S, 4*S);
+  ctx.fillStyle = '#aa0000';
+  ctx.fillRect(x + 7*S, y,           S, 4*S);
+  ctx.fillRect(x + 3*S, y + 3*S,   5*S,   S);
+  // snow base
+  ctx.fillStyle = '#c8e0f8';
+  ctx.fillRect(x,        y + 10*S, 6*S, 2*S);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + S,    y + 10*S, 4*S,   S);
+}
 </script>
 </body>
 </html>
