@@ -20,12 +20,17 @@
       width: 560px;
       max-width: 100vw;
     }
+    #game-container {
+      position: relative;
+      overflow: hidden;
+    }
     canvas {
       display: block;
       width: 100%;
       image-rendering: pixelated;
       border: 2px solid #1a2233;
       box-shadow: 0 0 30px rgba(168, 216, 255, 0.2);
+      touch-action: none;
     }
     .screen {
       position: absolute;
@@ -53,6 +58,7 @@
       margin-bottom: 14px;
     }
     label.field-label {
+      display: block;
       font-size: 11px;
       color: #4466aa;
       letter-spacing: 3px;
@@ -185,35 +191,37 @@
 <div id="game-wrap">
   <button id="hub-btn" onclick="window.location.href='/'">← HUB</button>
 
-  <!-- START SCREEN -->
-  <div id="screen-start" class="screen">
-    <h1 class="game-title">SKI LEMMING</h1>
-    <div class="game-subtitle">∙ DOWNHILL EDITION ∙</div>
-    <label class="field-label" for="nameInput">NOME DO JOGADOR</label>
-    <input type="text" id="nameInput" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
-    <button class="btn btn-primary" id="btn-start">JOGAR</button>
-    <div class="leaderboard">
-      <div class="lb-title">∙ TOP 10 ∙</div>
-      <div class="lb-scroll" id="lb-start-entries"></div>
+  <div id="game-container">
+    <!-- START SCREEN -->
+    <div id="screen-start" class="screen">
+      <h1 class="game-title">SKI LEMMING</h1>
+      <div class="game-subtitle">∙ DOWNHILL EDITION ∙</div>
+      <label class="field-label" for="nameInput">NOME DO JOGADOR</label>
+      <input type="text" id="nameInput" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
+      <button class="btn btn-primary" id="btn-start">JOGAR</button>
+      <div class="leaderboard">
+        <div class="lb-title">∙ TOP 10 ∙</div>
+        <div class="lb-scroll" id="lb-start-entries"></div>
+      </div>
     </div>
-  </div>
 
-  <!-- GAME OVER SCREEN -->
-  <div id="screen-gameover" class="screen hidden">
-    <h1 class="game-title" style="font-size:26px; margin-bottom:0">GAME OVER</h1>
-    <div id="go-stats" class="gameover-stats"></div>
-    <div id="go-score" class="gameover-score"></div>
-    <label class="field-label" for="nameInputGO">NOME DO JOGADOR</label>
-    <input type="text" id="nameInputGO" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
-    <button class="btn btn-primary" id="btn-submit">ENVIAR SCORE</button>
-    <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
-    <div class="leaderboard">
-      <div class="lb-title">∙ TOP 10 ∙</div>
-      <div class="lb-scroll" id="lb-go-entries"></div>
+    <!-- GAME OVER SCREEN -->
+    <div id="screen-gameover" class="screen hidden">
+      <h1 class="game-title" style="font-size:26px; margin-bottom:0">GAME OVER</h1>
+      <div id="go-stats" class="gameover-stats"></div>
+      <div id="go-score" class="gameover-score"></div>
+      <label class="field-label" for="nameInputGO">NOME DO JOGADOR</label>
+      <input type="text" id="nameInputGO" maxlength="12" autocomplete="off" placeholder="SEU NOME" />
+      <button class="btn btn-primary" id="btn-submit">ENVIAR SCORE</button>
+      <button class="btn btn-secondary" id="btn-restart">JOGAR NOVAMENTE</button>
+      <div class="leaderboard">
+        <div class="lb-title">∙ TOP 10 ∙</div>
+        <div class="lb-scroll" id="lb-go-entries"></div>
+      </div>
     </div>
-  </div>
 
-  <canvas id="gameCanvas" width="560" height="700"></canvas>
+    <canvas id="gameCanvas" width="560" height="700"></canvas>
+  </div>
 
   <!-- MOBILE BUTTONS (hidden until touch detected) -->
   <div id="mobile-btns" style="display:none">
