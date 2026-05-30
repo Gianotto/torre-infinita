@@ -18,5 +18,15 @@
     "color": "#aaddff",
     "added": "2026-05-22",
     "tags": ["runner", "endless", "arcade"]
+  },
+  {
+    "id": "ski-lemming",
+    "name": "Ski Lemming",
+    "subtitle": "DOWNHILL EDITION",
+    "description": "Desça a montanha como um Lemming esquiador. Desvie de árvores, cachorros e rivais.",
+    "path": "/games/ski-lemming/",
+    "color": "#a8d8ff",
+    "added": "2026-05-29",
+    "tags": ["arcade", "endless", "skill"]
   }
 ]
